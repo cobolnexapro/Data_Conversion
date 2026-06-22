@@ -1,0 +1,1212 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CLL41.
+              ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+                                                                                                                                                                                                00110000
+           SELECT DATCPY ASSIGN TO WS-DATA-FILE-NAME                                                                                                                                                    00120002
+           ORGANIZATION IS  SEQUENTIAL                                                                                                                                                           00130002
+           FILE STATUS IS FS-STATUS2.                                                                                                                                                           00140002
+
+           SELECT OUTCPYONE ASSIGN TO WS-OUTPUT-FILE-NAME
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-STATUS3.
+
+       DATA DIVISION.
+       FILE SECTION.
+
+           COPY 'C:\BACKUP2\COPFD.cpy.txt'.
+
+       FD OUTCPYONE.
+       01  OUT-DATA-ONE                    PIC X(1000).
+
+
+       WORKING-STORAGE SECTION.
+       01 WS-DATA.
+           05 WS-REC                   PIC X(100).
+       01 WS-DATA-OUT.
+           05 OUT-REC                  PIC X(1000).
+       01 OUT-REC-STR                  PIC X(2).
+       01 WS-EOF                       PIC A(1).
+       01 FS-STATUS2                   PIC 99.
+       01 FS-STATUS3                   PIC 99.
+       01 WS-SEP                       PIC XX          VALUE '|^'.
+       01 WS-OUT-DAT                   PIC X(3276).
+       01 WS-OUT-DAT-TRIM1             PIC X(3276).
+       01 WS-OUT-DAT-TRIM2             PIC X(3276).
+       01 WS-IN                        PIC 999         VALUE 1.
+       01 WS-OT                        PIC 999         VALUE 1.
+       01 I                            PIC 999.
+       01 J                            PIC 999         VALUE 1.
+       01 Z1                           PIC 999         VALUE 1.
+       01 CPY-STRNG                    PIC X(100)      VALUE IS SPACES.
+       01 WS-HOLD-CPY-STRNG            PIC X(100)      VALUE IS SPACES.
+       01 WS-COMP                      PIC 9           VALUE ZERO .
+       01 WS-HOLD-COMP3                PIC X(20)       VALUE SPACES.
+       01 WS-TEMP-COMP3                PIC X(20)       VALUE SPACES.
+       01 WS-COMP-LEN                  PIC 999         VALUE ZEROS.
+       01 WS-CNT-LEN                   PIC 999         VALUE ZEROS.
+       01 WS-SIGN-FLG                  PIC X(1)        VALUE 'N'.
+       01 WS-SIGN-CNT                  PIC 999         VALUE ZEROS.
+       01 LAST-CHAR-POS                PIC 9999        VALUE ZEROS.
+       01 READ-COUNT                   PIC 9(8)        VALUE ZEROS.
+       01 WRITE-COUNT                  PIC 9(8)        VALUE ZEROS.
+       01 Q                            PIC 9(5)        VALUE ZEROS.
+       01 WS-S                         PIC 9(3)        VALUE 1.
+       01 WS-B                         PIC 9(3)        VALUE 0.
+       01 DISP                         PIC X(1).
+
+       01  WS-FILE-NAMES.
+           05 WS-DATA-FILE-NAME        PIC X(100).
+           05 WS-OUTPUT-FILE-NAME      PIC X(100).
+
+       01  PROCESS-IND                 PIC X(1) VALUE 'N'.
+           88 PROCESS-REC                       VALUE 'P'.
+           88 BYPASS-REC                        VALUE 'B'.
+
+       01  ALL-20-TABLE.
+           02  FILLER              PIC X(20) VALUE '40'.
+           02  FILLER              PIC X(20) VALUE '4040'.
+           02  FILLER              PIC X(20) VALUE '404040'.
+           02  FILLER              PIC X(20) VALUE '40404040'.
+           02  FILLER              PIC X(20) VALUE '4040404040'.
+           02  FILLER              PIC X(20) VALUE '404040404040'.
+           02  FILLER              PIC X(20) VALUE '40404040404040'.
+           02  FILLER              PIC X(20) VALUE '4040404040404040'.
+           02  FILLER              PIC X(20) VALUE '404040404040404040'.
+
+
+       01  FILLER REDEFINES ALL-20-TABLE.
+           02 ALL-20-TAB OCCURS 9 TIMES PIC X(20).
+
+       01  ASCII-DATA.
+           05 FILER PIC X(16) VALUE X'000102039C09867F978D8E0B0C0D0E0F'.
+           05 FILER PIC X(16) VALUE X'101112139D8508871819928F1C1D1E1F'.
+           05 FILER PIC X(16) VALUE X'80818283840A171B88898A8B8C050607'.
+           05 FILER PIC X(16) VALUE X'909116939495960498999A9B14159E1A'.
+           05 FILER PIC X(16) VALUE X'20A0E2E4E0E1E3E5E7F1A22E3C282B7C'.
+           05 FILER PIC X(16) VALUE X'26E9EAEBE8EDEEEFECDF21242A293BAC'.
+           05 FILER PIC X(16) VALUE X'2D2FC2C4C0C1C3C5C7D1A62C255F3E3F'.
+           05 FILER PIC X(16) VALUE X'F8C9CACBC8CDCECFCC603A2340273D22'.
+           05 FILER PIC X(16) VALUE X'D8616263646566676869ABBBF0FDFEB1'.
+           05 FILER PIC X(16) VALUE X'B06A6B6C6D6E6F707172AABAE6B8C6A4'.
+           05 FILER PIC X(16) VALUE X'B57E737475767778797AA1BFD0DDDEAE'.
+           05 FILER PIC X(16) VALUE X'5EA3A5B7A9A7B6BCBDBE5B5DAFA8B4D7'.
+           05 FILER PIC X(16) VALUE X'7B414243444546474849ADF4F6F2F3F5'.
+           05 FILER PIC X(16) VALUE X'7D4A4B4C4D4E4F505152B9FBFCF9FAFF'.
+           05 FILER PIC X(16) VALUE X'5CF7535455565758595AB2B4B6D2D3D5'.
+           05 FILER PIC X(16) VALUE X'30313233343536373839B3DBDCD9DAFF'.
+
+       01  A-INFO  REDEFINES ASCII-DATA PIC X(256).
+       01  ASCII-TABLE    REDEFINES ASCII-DATA .
+           05 ASCII-BYTE PIC X(1) OCCURS 256 TIMES.
+
+       01  EBCDIC-DATA.
+           05 FILER PIC X(16) VALUE X'000102030405060708090A0B0C0D0E0F'.
+           05 FILER PIC X(16) VALUE X'101112131415161718191A1B1C1D1E1F'.
+           05 FILER PIC X(16) VALUE X'202122232425262728292A2B2C2D2E2F'.
+           05 FILER PIC X(16) VALUE X'303132333435363738393A3B3C3D3E3F'.
+           05 FILER PIC X(16) VALUE X'404142434445464748494A4B4C4D4E4F'.
+           05 FILER PIC X(16) VALUE X'505152535455565758595A5B5C5D5E5F'.
+           05 FILER PIC X(16) VALUE X'606162636465666768696A6B6C6D6E6F'.
+           05 FILER PIC X(16) VALUE X'707172737475767778797A7B7C7D7E7F'.
+           05 FILER PIC X(16) VALUE X'808182838485868788898A8B8C8D8E8F'.
+           05 FILER PIC X(16) VALUE X'909192939495969798999A9B9C9D9E9F'.
+           05 FILER PIC X(16) VALUE X'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'.
+           05 FILER PIC X(16) VALUE X'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'.
+           05 FILER PIC X(16) VALUE X'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'.
+           05 FILER PIC X(16) VALUE X'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'.
+           05 FILER PIC X(16) VALUE X'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'.
+           05 FILER PIC X(16) VALUE X'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'.
+
+       01  E-INFO  REDEFINES EBCDIC-DATA PIC X(256).
+       01  EBCDIC-TABLE    REDEFINES EBCDIC-DATA .
+           05 EBCDIC-BYTE PIC X OCCURS 256 TIMES.
+
+       01  TABLE-DATA.
+           05 TABLE-ENTRY OCCURS 20 TIMES.
+              10 ENTRY-VALUE                PIC X(20).
+
+       01  WS-T-INDX                        PIC 999 VALUE IS 001.
+       01  WS-DATA-OUT-1                    PIC X(20).
+       01  WS-TABLE-CHECK.
+           05 WS-CRT-PREFIX                 PIC X.
+           05 WS-CRT-VALUE                  PIC X(19).
+
+       01  START-RANGE                      PIC X(10).
+       01  END-RANGE                        PIC X(10).
+
+
+       LINKAGE SECTION.
+       01 LS-SCRIPT-TABLE.
+           05 WS-DETAIL OCCURS 500 TIMES.
+             10 WS-SEQ                 PIC 999.
+             10 WS-DATA-TYPE-NAME      PIC X(25).
+             10 WS-DATA-TYE            PIC X(22).
+             10 WS-TOTAL-LEN           PIC 999.
+             10 WS-FLAG-VAL            PIC X(3)        VALUE SPACES.
+             10 WS-DECIMAL             PIC X(1).
+             10 WS-DECIMAL-POS         PIC 999.
+
+       01  LS-FILE-NAMES.
+           05 LS-DATA-FILE-NAME        PIC X(100).
+           05 LS-OUTPUT-FILE-NAME      PIC X(100).
+
+       01  LS-CRT-STRT-POS             PIC X(3).
+       01  LS-CRT-LEN                  PIC X(3).
+       01  LS-FINAL-CRITERIA           PIC X(100).
+       01  LS-CRITERIA-DEFINE          PIC X(1) VALUE ' '.
+           88 WS-CRT-LAST-ROW                   VALUE 'L'.
+           88 WS-CRT-SPACE                      VALUE 'S'.
+           88 WS-CRT-NOO-RANGE                  VALUE 'N'.
+           88 WS-CRT-YES-RANGE                  VALUE 'Y'.
+
+       PROCEDURE DIVISION USING LS-SCRIPT-TABLE,
+                                LS-FILE-NAMES,
+                                LS-CRT-STRT-POS,
+                                LS-CRT-LEN,
+                                LS-FINAL-CRITERIA,
+                                LS-CRITERIA-DEFINE.
+
+      *> MAIN PROGRAM LOGIC STARTED
+           PERFORM 200-SETUP-FILE.
+           PERFORM 400-DATA-EXTRACT THRU 400-EXIT.
+           PERFORM 600-STOP-PGM.
+
+      ****************************************************************
+       600-STOP-PGM.
+             CLOSE DATCPY OUTCPYONE .
+             EXIT PROGRAM.
+
+      ****************************************************************
+       200-SETUP-FILE.
+           MOVE LS-DATA-FILE-NAME    TO WS-DATA-FILE-NAME.
+           MOVE LS-OUTPUT-FILE-NAME  TO WS-OUTPUT-FILE-NAME.
+
+           IF WS-CRT-YES-RANGE
+              UNSTRING LS-FINAL-CRITERIA DELIMITED BY '-'
+                       INTO START-RANGE, END-RANGE
+              END-UNSTRING
+           END-IF.
+
+           IF WS-CRT-LAST-ROW
+              UNSTRING LS-FINAL-CRITERIA(2:99) DELIMITED BY ';'
+                      INTO TABLE-ENTRY(1) ,
+                           TABLE-ENTRY(2) ,
+                           TABLE-ENTRY(3) ,
+                           TABLE-ENTRY(4) ,
+                           TABLE-ENTRY(5) ,
+                           TABLE-ENTRY(6) ,
+                           TABLE-ENTRY(7) ,
+                           TABLE-ENTRY(8) ,
+                           TABLE-ENTRY(9) ,
+                           TABLE-ENTRY(10) ,
+                           TABLE-ENTRY(11) ,
+                           TABLE-ENTRY(12) ,
+                           TABLE-ENTRY(13) ,
+                           TABLE-ENTRY(14) ,
+                           TABLE-ENTRY(15) ,
+                           TABLE-ENTRY(16) ,
+                           TABLE-ENTRY(17) ,
+                           TABLE-ENTRY(18) ,
+                           TABLE-ENTRY(19) ,
+                           TABLE-ENTRY(20)
+             END-UNSTRING
+           END-IF.
+
+           *> DISPLAY  'LS-FILE-NAMES : ' LS-FILE-NAMES.
+           *> DISPLAY  'LS-CRT-STRT-POS : ' LS-CRT-STRT-POS.
+           *> DISPLAY  'LS-CRT-LEN : ' LS-CRT-LEN.
+           *> DISPLAY  'LS-FINAL-CRITERIA : ' LS-FINAL-CRITERIA.
+           *> DISPLAY  'LS-CRITERIA-DEFINE : ' LS-CRITERIA-DEFINE.
+
+
+
+      ****************************************************************
+       400-DATA-EXTRACT.
+             PERFORM 420-INITIALIZE.
+
+             EVALUATE TRUE
+              WHEN WS-CRT-LAST-ROW
+                   PERFORM 430-WS-CRT-LAST-ROW
+              WHEN WS-CRT-SPACE
+                   PERFORM 430-WS-CRT-SPACE
+              WHEN WS-CRT-NOO-RANGE
+                   PERFORM 430-WS-CRT-NOO-RANGE
+              WHEN WS-CRT-YES-RANGE
+                   PERFORM 430-WS-CRT-YES-RANGE
+             END-EVALUATE.
+
+             DISPLAY WS-OUTPUT-FILE-NAME ': ' WRITE-COUNT.
+
+       400-EXIT. EXIT.
+
+      ****************************************************************
+       420-INITIALIZE.
+              INITIALIZE  READ-COUNT
+                          WRITE-COUNT
+                          DAT-REC
+                          WS-EOF.
+
+              OPEN INPUT  DATCPY.
+              OPEN OUTPUT OUTCPYONE .
+
+              IF FS-STATUS2 NOT = '00'
+                 DISPLAY 'DATA FILE NOT OPEN: ' FS-STATUS2
+                 PERFORM 600-STOP-PGM
+              END-IF.
+
+              IF FS-STATUS3 NOT = '00'
+                 DISPLAY 'OUTCPY NOT OPEN ' FS-STATUS3
+                 PERFORM 600-STOP-PGM
+              END-IF.
+
+      ****************************************************************
+       430-WS-CRT-LAST-ROW.
+           PERFORM UNTIL WS-EOF = 'Y'
+                  READ DATCPY
+                     AT END
+                       MOVE 'Y' TO WS-EOF
+                     NOT AT END
+                       ADD 1 TO READ-COUNT
+                       INSPECT DAT-REC REPLACING ALL X'0D' BY X'0D'
+                       MOVE DAT-REC      TO WS-OUT-DAT
+
+                       MOVE WS-OUT-DAT(LS-CRT-STRT-POS : LS-CRT-LEN) TO
+                            WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+
+                       INSPECT  WS-DATA-OUT-1 CONVERTING
+                                E-INFO TO A-INFO
+
+                       PERFORM 435-VALIDATE-REC  THRU 435-EXIT
+
+                       IF PROCESS-REC
+                          PERFORM 470-DATA-BRK
+                          ADD 1 TO WRITE-COUNT
+                       END-IF
+
+                       INITIALIZE DAT-REC WS-OUT-DAT WS-DATA-OUT-1
+                  END-READ
+           END-PERFORM.
+
+      ****************************************************************
+       430-WS-CRT-SPACE.
+           PERFORM UNTIL WS-EOF = 'Y'
+                  READ DATCPY
+                     AT END
+                       MOVE 'Y' TO WS-EOF
+                     NOT AT END
+                       ADD 1 TO READ-COUNT
+                       INSPECT DAT-REC REPLACING ALL X'0D' BY X'0D'
+                       MOVE DAT-REC      TO WS-OUT-DAT
+                       PERFORM 470-DATA-BRK
+                       INITIALIZE DAT-REC WS-OUT-DAT
+                  END-READ
+           END-PERFORM.
+      ****************************************************************
+       430-WS-CRT-NOO-RANGE.
+           PERFORM UNTIL WS-EOF = 'Y'
+                  READ DATCPY
+                     AT END
+                       MOVE 'Y' TO WS-EOF
+                     NOT AT END
+                       ADD 1 TO READ-COUNT
+                       INSPECT DAT-REC REPLACING ALL X'0D' BY X'0D'
+                       MOVE DAT-REC      TO WS-OUT-DAT
+
+                       MOVE WS-OUT-DAT(LS-CRT-STRT-POS : LS-CRT-LEN) TO
+                            WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+
+                       INSPECT  WS-DATA-OUT-1 CONVERTING
+                                E-INFO TO A-INFO
+
+                       IF WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN) =
+                         LS-FINAL-CRITERIA(1 : LS-CRT-LEN)
+                          PERFORM 470-DATA-BRK
+                          ADD 1 TO WRITE-COUNT
+                       END-IF
+
+                       INITIALIZE DAT-REC WS-OUT-DAT WS-DATA-OUT-1
+                  END-READ
+           END-PERFORM.
+
+      ****************************************************************
+       430-WS-CRT-YES-RANGE.
+           PERFORM UNTIL WS-EOF = 'Y'
+                  READ DATCPY
+                     AT END
+                       MOVE 'Y' TO WS-EOF
+                     NOT AT END
+                       ADD 1 TO READ-COUNT
+                       INSPECT DAT-REC REPLACING ALL X'0D' BY X'0D'
+                       MOVE DAT-REC      TO WS-OUT-DAT
+
+                       MOVE WS-OUT-DAT(LS-CRT-STRT-POS : LS-CRT-LEN) TO
+                            WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+
+                       INSPECT  WS-DATA-OUT-1 CONVERTING
+                                E-INFO TO A-INFO
+
+                       IF WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+                                       >= START-RANGE(1 : LS-CRT-LEN)
+                                       AND
+                          WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+                                       <= END-RANGE(1 : LS-CRT-LEN)
+                          PERFORM 470-DATA-BRK
+                          ADD 1 TO WRITE-COUNT
+                       END-IF
+
+                       INITIALIZE DAT-REC WS-OUT-DAT WS-DATA-OUT-1
+                  END-READ
+           END-PERFORM.
+
+      *****************************************************************
+       435-VALIDATE-REC.
+           SET PROCESS-REC TO TRUE.
+
+           PERFORM VARYING WS-T-INDX FROM 1 BY 1
+                           UNTIL WS-T-INDX > 20 OR BYPASS-REC
+             MOVE TABLE-ENTRY(WS-T-INDX) TO WS-TABLE-CHECK
+
+             IF WS-CRT-PREFIX = 'N'
+                IF WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN) =
+                   WS-CRT-VALUE(1 : LS-CRT-LEN)
+                   SET BYPASS-REC TO TRUE
+                END-IF
+             ELSE
+                UNSTRING WS-CRT-VALUE DELIMITED BY '-'
+                         INTO START-RANGE, END-RANGE
+                END-UNSTRING
+
+                IF WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+                                       >= START-RANGE(1 : LS-CRT-LEN)
+                                       AND
+                          WS-DATA-OUT-1(LS-CRT-STRT-POS : LS-CRT-LEN)
+                                       <= END-RANGE(1 : LS-CRT-LEN)
+                   SET BYPASS-REC TO TRUE
+                END-IF
+
+             END-IF
+
+             INITIALIZE WS-TABLE-CHECK
+
+           END-PERFORM.
+
+       435-EXIT. EXIT.
+
+      ****************************************************************
+       436-CHECK-CRITERIA.
+       436-EXIT. EXIT.
+
+      ****************************************************************
+       470-DATA-BRK.
+              MOVE 1               TO WS-IN WS-OT J WS-S.
+              MOVE SPACES          TO OUT-REC.
+              MOVE WS-SEP          TO OUT-REC(1:2).
+              ADD 2                TO J.
+
+              PERFORM VARYING Q FROM 1 BY 1 UNTIL
+                      WS-SEQ(Q) = ZEROS OR
+                      WS-SEQ(Q) = SPACES
+
+                      IF WS-DATA-TYE(Q) = 'VARCHAR' OR
+                         WS-DATA-TYE(Q) = 'CHAR'
+                           PERFORM 480-CHAR-CONVERSION
+                           MOVE WS-SEP TO OUT-REC(J:2)
+                           ADD 2 TO J
+                      ELSE
+                         IF WS-DATA-TYE(Q) = 'DECIMAL' OR
+                            WS-DATA-TYE(Q) = 'FLOAT'   OR
+                            WS-DATA-TYE(Q) = 'REAL'    OR
+                           (WS-DATA-TYE(Q) = 'INT' AND
+                            WS-FLAG-VAL(Q) NOT = SPACES) OR
+                           (WS-DATA-TYE(Q) = 'INT' AND
+                            WS-FLAG-VAL(Q) = SPACES)
+
+                               PERFORM 490-INT-CONVERSION
+                               MOVE WS-SEP TO OUT-REC(J:2)
+                               ADD 2 TO J
+                         END-IF
+                      END-IF
+              END-PERFORM.
+              WRITE OUT-DATA-ONE FROM OUT-REC.
+
+       490-INT-CONVERSION.
+           ADD WS-S WS-TOTAL-LEN(Q) GIVING WS-B.
+           INITIALIZE WS-HOLD-COMP3 WS-TEMP-COMP3 WS-CNT-LEN.
+
+           MOVE 1                              TO WS-COMP-LEN.
+
+           PERFORM VARYING I FROM WS-S BY 1 UNTIL I > WS-B - 1
+               EVALUATE TRUE
+                  WHEN WS-OUT-DAT(i:1) = X'00'
+                       move '00' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'40'
+                       move '40' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F0'
+                       move '0' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F1'
+                       move '1' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F2'
+                       move '2' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F3'
+                       move '3' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F4'
+                       move '4' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F5'
+                       move '5' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F6'
+                       move '6' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F7'
+                       move '7' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F8'
+                       move '8' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'F9'
+                       move '9' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '0'
+                       move '30' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '1'
+                       move '31' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '2'
+                       move '32' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '3'
+                       move '33' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '4'
+                       move '34' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '5'
+                       move '35' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '6'
+                       move '36' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '7'
+                       move '37' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '8'
+                       move '38' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '9'
+                       move '39' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'10'
+                       move '10' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'11'
+                       move '11' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'12'
+                       move '12' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'13'
+                       move '13' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'14'
+                       move '14' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'15'
+                       move '15' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'16'
+                       move '16' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'17'
+                       move '17' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'18'
+                       move '18' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'19'
+                       move '19' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'20'
+                       move '20' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'21'
+                       move '21' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'22'
+                       move '22' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'23'
+                       move '23' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'24'
+                       move '24' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'25'
+                       move '25' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'26'
+                       move '26' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'27'
+                       move '27' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'28'
+                       move '28' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'29'
+                       move '29' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'41'
+                       move '41' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'42'
+                       move '42' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'43'
+                       move '43' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'44'
+                       move '44' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'45'
+                       move '45' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'46'
+                       move '46' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'47'
+                       move '47' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'48'
+                       move '48' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'49'
+                       move '49' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '•'
+                       move '95' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'72'
+                       move '72' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '='
+                       move '3D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'01'
+                       move '01' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'02'
+                       move '02' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'03'
+                       move '03' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'04'
+                       move '04' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'05'
+                       move '05' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'06'
+                       move '06' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'07'
+                       move '07' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'08'
+                       move '08' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'09'
+                       move '09' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'50'
+                       move '50' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'51'
+                       move '51' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'52'
+                       move '52' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'53'
+                       move '53' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'54'
+                       move '54' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'55'
+                       move '55' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'56'
+                       move '56' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'57'
+                       move '57' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'58'
+                       move '58' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'59'
+                       move '59' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'80'
+                       move '80' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'81'
+                       move '81' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'82'
+                       move '82' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'83'
+                       move '83' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'84'
+                       move '84' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'85'
+                       move '85' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'86'
+                       move '86' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'87'
+                       move '87' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'88'
+                       move '88' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'89'
+                       move '89' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = '‚'
+                       move '82' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'0C'
+                       move '0C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'0D'
+                       move '0D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'1C'
+                       move '1C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'1D'
+                       move '1D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'2C'
+                       move '2C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'2D'
+                       move '2D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'3C'
+                       move '3C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'3D'
+                       move '3D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'4C'
+                       move '4C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'4D'
+                       move '4D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'5C'
+                       move '5C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'5D'
+                       move '5D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'6C'
+                       move '6C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'6D'
+                       move '6D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'7C'
+                       move '7C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'7D'
+                       move '7D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'8C'
+                       move '8C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'8D'
+                       move '8D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'9C'
+                       move '9C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'9D'
+                       move '9D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'45'
+                       move '45' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'60'
+                       move '60' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'61'
+                       move '61' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'62'
+                       move '62' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'63'
+                       move '63' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'64'
+                       move '64' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'65'
+                       move '65' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'66'
+                       move '66' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'67'
+                       move '67' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'68'
+                       move '68' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'69'
+                       move '69' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'70'
+                       move '70' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'71'
+                       move '71' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'72'
+                       move '72' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'73'
+                       move '73' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'74'
+                       move '74' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'75'
+                       move '75' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'76'
+                       move '76' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'77'
+                       move '77' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'78'
+                       move '78' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'79'
+                       move '79' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'90'
+                       move '90' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'91'
+                       move '91' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'92'
+                       move '92' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'93'
+                       move '93' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'94'
+                       move '94' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'95'
+                       move '95' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'96'
+                       move '96' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'97'
+                       move '97' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'98'
+                       move '98' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'99'
+                       move '99' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D0'
+                       move '}' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D1'
+                       move 'J' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D2'
+                       move 'K' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D3'
+                       move 'L' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D4'
+                       move 'M' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D5'
+                       move 'N' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D6'
+                       move 'O' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D7'
+                       move 'P' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D8'
+                       move 'Q' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'D9'
+                       move 'R' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E0'
+                       move '\' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E1'
+                       move '÷' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E2'
+                       move 'S' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E3'
+                       move 'T' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E4'
+                       move 'U' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E5'
+                       move 'V' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E6'
+                       move 'W' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E7'
+                       move 'X' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E8'
+                       move 'Y' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'E9'
+                       move 'Z' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C0'
+                       move '{' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C1'
+                       move 'A' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C2'
+                       move 'B' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C3'
+                       move 'C' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C4'
+                       move 'D' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C5'
+                       move 'E' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C6'
+                       move 'F' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C7'
+                       move 'G' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C8'
+                       move 'H' to OUT-REC-STR
+                  WHEN WS-OUT-DAT(i:1) = X'C9'
+                       move 'I' to OUT-REC-STR
+                  when other
+                       move WS-OUT-DAT(i:1) to OUT-REC-STR
+                END-EVALUATE
+                PERFORM 496-MOVE-COMP-VALUE
+           END-PERFORM.
+
+           PERFORM 497-CONVERSION-COMP-VALUE.
+
+           ADD WS-TOTAL-LEN(Q) TO WS-S.
+
+       480-CHAR-CONVERSION.
+           ADD WS-S WS-TOTAL-LEN(Q) GIVING WS-B
+
+      *>     IF WS-OUT-DAT(WS-B - 1:1) = '\'
+      *>         MOVE '+' TO OUT-REC-STR
+      *>         PERFORM 495-MOVE-VALUE
+      *>     END-IF
+
+           PERFORM VARYING I FROM WS-S BY 1 UNTIL
+                  I > WS-B - 1
+              EVALUATE TRUE
+               WHEN WS-OUT-DAT(i:1) = X'00'
+                move X'00' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'0C'
+                move '0C' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'40'
+                move SPACE to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4A'
+                move '¢' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4B'
+                move '.' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4C'
+                move '<' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4D'
+                move '(' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4E'
+                move '+' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'4F'
+                move '|' to OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Á'
+                 move 'A' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Â'
+                 move 'B' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ã'
+                 move 'C' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ä'
+                 move 'D' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Å'
+                 move 'E' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Æ'
+                 move 'F' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ç'
+                 move 'G' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'È'
+                 move 'H' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'É'
+                 move 'I' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ë'
+                 move 'ô' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ì'
+                 move 'ö' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Í'
+                 move 'ò' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Î'
+                 move 'ó' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ï'
+                 move 'õ' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = X'C0'
+                 move '{' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = X'D0'
+                 move '}' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ñ'
+                 move 'J' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ò'
+                 move 'K' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ó'
+                 move 'L' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ô'
+                 move 'M' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Õ'
+                 move 'N' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ö'
+                 move 'O' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = '×'
+                 move 'P' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ø'
+                 move 'Q' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ù'
+                 move 'R' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ú'
+                 move '¹' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Û'
+                 move 'û' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ü'
+                 move 'ü' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Ý'
+                 move 'ù' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'Þ'
+                 move 'ú' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ß'
+                 move 'ÿ' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'à'
+                 move '\' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'á'
+                 move '÷' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'â'
+                 move 'S' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ã'
+                 move 'T' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ä'
+                 move 'U' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'å'
+                 move 'V' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'æ'
+                 move 'W' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ç'
+                 move 'X' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'è'
+                 move 'Y' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'é'
+                 move 'Z' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ð'
+                 move '0' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ñ'
+                 move '1' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ò'
+                 move '2' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ó'
+                 move '3' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ô'
+                 move '4' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'õ'
+                 move '5' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ö'
+                 move '6' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = '÷'
+                 move '7' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ø'
+                 move '8' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = 'ù'
+                 move '9' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = '1'
+                 move '31' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = X'5C'
+                 move '*' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = '‘'
+                 move '91' to  OUT-REC-STR
+               when WS-OUT-DAT(i:1) = X'60'
+                 move '-' to  OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'61'
+                 move '/' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'62'
+                 move '62' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'63'
+                 move '63' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'64'
+                 move '64' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'65'
+                 move '65' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'66'
+                 move '66' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'67'
+                 move '67' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'68'
+                 move '68' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'69'
+                 move '69' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'70'
+                 move '70' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'71'
+                 move '71' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'72'
+                 move '72' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'73'
+                 move '73' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'74'
+                 move '74' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'75'
+                 move '75' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'76'
+                 move '76' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'77'
+                 move '77' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'78'
+                 move '78' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'79'
+                 move '79' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'10'
+                 move '10' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'11'
+                 move '11' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'12'
+                 move '12' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'13'
+                 move '13' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'14'
+                 move '14' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'15'
+                 move '15' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'16'
+                 move '16' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'17'
+                 move '17' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'18'
+                 move '18' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'19'
+                 move '19' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'20'
+                 move '00' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'21'
+                 move '21' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'22'
+                 move '22' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'23'
+                 move '23' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'24'
+                 move '24' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'25'
+                 move '25' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'26'
+                 move '26' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'27'
+                 move '27' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'28'
+                 move '28' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'29'
+                 move '29' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'80'
+                 move '80' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'81'
+                 move 'a' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'82'
+                 move 'b' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'83'
+                 move 'c' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'84'
+                 move 'd' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'85'
+                 move 'e' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'86'
+                 move 'f' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'87'
+                 move 'g' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'88'
+                 move 'h' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'89'
+                 move 'i' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'91'
+                 move 'j' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'92'
+                 move 'k' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'93'
+                 move 'l' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'94'
+                 move 'm' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'95'
+                 move 'n' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'96'
+                 move 'o' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'97'
+                 move 'p' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'98'
+                 move 'q' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'99'
+                 move 'r' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A2'
+                 move 's' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A3'
+                 move 't' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A4'
+                 move 'u' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A5'
+                 move 'v' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A6'
+                 move 'w' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A7'
+                 move 'x' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A8'
+                 move 'y' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'A9'
+                 move 'z' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'01'
+                 move '01' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'02'
+                 move '02' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'03'
+                 move '03' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'04'
+                 move '04' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'05'
+                 move '05' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'06'
+                 move '06' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'07'
+                 move '07' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'08'
+                 move '08' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'09'
+                 move '09' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'41'
+                 move '41' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'42'
+                 move '42' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'43'
+                 move '43' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'44'
+                 move '44' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'45'
+                 move '45' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'46'
+                 move '46' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'47'
+                 move '47' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'48'
+                 move '48' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'49'
+                 move '49' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'50'
+                 move '&' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'5A'
+                 move '!' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'5B'
+                 move '$' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'5C'
+                 move '*' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'5D'
+                 move ')' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'5E'
+                 move ';' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'6B'
+                 move ',' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'6C'
+                 move '%' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'6D'
+                 move '_' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'6E'
+                 move '>' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'6F'
+                 move '?' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'79'
+                 move '`' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7A'
+                 move ':' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7B'
+                 move '#' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7C'
+                 move '@' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7D'
+                 move "'" to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7E'
+                 move '=' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'7F'
+                 move '"' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'BA'
+                 move '[' to OUT-REC-STR
+               WHEN WS-OUT-DAT(i:1) = X'BB'
+                 move ']' to OUT-REC-STR
+               when other
+                 move WS-OUT-DAT(i:1) to OUT-REC-STR
+              END-EVALUATE
+              PERFORM 495-MOVE-VALUE
+           END-PERFORM.
+
+           ADD WS-TOTAL-LEN(Q) TO WS-S.
+
+
+       495-MOVE-VALUE.
+           IF OUT-REC-STR(2:1) = " "
+               MOVE OUT-REC-STR TO OUT-REC(j:1)
+               add 1            TO j
+           ELSE
+               MOVE OUT-REC-STR TO OUT-REC(j:2)
+               add 2            TO j
+           END-IF.
+
+       496-MOVE-COMP-VALUE.
+           IF OUT-REC-STR(2:1) = " "
+               MOVE OUT-REC-STR TO WS-HOLD-COMP3(WS-COMP-LEN:1)
+               add 1            TO WS-COMP-LEN
+           ELSE
+               MOVE OUT-REC-STR TO WS-HOLD-COMP3(WS-COMP-LEN:2)
+               add 2            TO WS-COMP-LEN
+           END-IF.
+
+       497-CONVERSION-COMP-VALUE.
+           MOVE 'N'             TO WS-SIGN-FLG.
+           MOVE ZEROES          TO WS-SIGN-CNT.
+           MOVE 018             TO WS-SIGN-CNT.
+
+           PERFORM UNTIL WS-SIGN-FLG = 'Y'
+             EVALUATE TRUE
+               WHEN WS-HOLD-COMP3(WS-SIGN-CNT : 1) = 'D'
+                  ADD 1            TO WS-CNT-LEN
+                  MOVE '-'         TO WS-TEMP-COMP3(WS-CNT-LEN:1)
+                  MOVE 'Y'         TO WS-SIGN-FLG
+               WHEN WS-HOLD-COMP3(WS-SIGN-CNT : 1) = 'C'
+                  ADD 1            TO WS-CNT-LEN
+                  MOVE '+'         TO WS-TEMP-COMP3(WS-CNT-LEN:1)
+                  MOVE 'Y'         TO WS-SIGN-FLG
+               WHEN OTHER
+                  CONTINUE
+              END-EVALUATE
+
+              SUBTRACT 1 FROM WS-SIGN-CNT
+
+              IF WS-SIGN-CNT <= ZEROES
+                 MOVE 'Y'          TO  WS-SIGN-FLG
+              END-IF
+
+           END-PERFORM.
+
+           PERFORM VARYING WS-COMP-LEN FROM 1 BY 1
+                         UNTIL WS-COMP-LEN > 20
+
+                  EVALUATE TRUE
+                    WHEN WS-HOLD-COMP3(WS-COMP-LEN : 1) = 'C'
+                         CONTINUE
+                    WHEN WS-HOLD-COMP3(WS-COMP-LEN : 1) = 'D'
+                         CONTINUE
+                    WHEN WS-HOLD-COMP3(WS-COMP-LEN : 1) = ' '
+                         MOVE 21        TO WS-COMP-LEN
+                    WHEN OTHER
+                         ADD 1          TO WS-CNT-LEN
+                         MOVE WS-HOLD-COMP3(WS-COMP-LEN : 1) TO
+                              WS-TEMP-COMP3(WS-CNT-LEN : 1)
+
+                  END-EVALUATE
+
+                  IF WS-COMP-LEN = WS-DECIMAL-POS(Q)
+                     ADD 1              TO WS-CNT-LEN
+                     MOVE '.'           TO WS-TEMP-COMP3(WS-CNT-LEN : 1)
+                  END-IF
+           END-PERFORM.
+
+           IF ALL-20-TAB(WS-TOTAL-LEN(Q)) = WS-TEMP-COMP3
+              MOVE ALL '0'              TO  WS-TEMP-COMP3
+           END-IF.
+
+
+           MOVE WS-TEMP-COMP3       TO OUT-REC(j:WS-CNT-LEN).
+           ADD WS-CNT-LEN           TO J.

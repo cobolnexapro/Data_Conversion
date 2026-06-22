@@ -1,0 +1,1609 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CLL31.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+           SELECT CARDFILE ASSIGN TO 'C:\BACKUP2\DETAILCARD.TXT'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-CARD-STATUS.
+
+           SELECT INPCPY ASSIGN TO WS-COPYBOOK-NAME
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-STATUS.
+
+           SELECT COPYCPY  ASSIGN TO 'C:\BACKUP2\COPFD.cpy.txt'
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS FS-STATUS4.
+
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  CARDFILE.
+       01  CARD-DATA.
+           05 CARD-REC                      PIC X(400).
+
+       FD  INPCPY.
+       01  INP-DATA.
+           05 INP-REC                       PIC X(100).
+
+       FD  COPYCPY.
+       01  COPY-DATA.
+           05 COPY-REC                      PIC X(80).
+
+       WORKING-STORAGE SECTION.
+       01  WS-DATA.
+           05 WS-REC                        PIC X(100).
+       01  WS-DATA-OUT.
+           05 WS-OUT-REC                    PIC X(400).
+
+       01  WS-EOF                           PIC A(1).
+       01  WS-CARD-EOF                      PIC A(1) VALUE IS 'N'.
+       01  FS-CARD-STATUS                   PIC 99.
+       01  FS-STATUS                        PIC 99.
+       01  FS-STATUS4                       PIC 99.
+       01  DIFF                             PIC 999      VALUE IS ZEROS.
+       01  WS-SEP                           PIC XX       VALUE IS  '|^'.
+       01  WS-OUT-DAT                       PIC X(3276).
+       01  WS-DELIMITER                     PIC X(1) VALUE IS ';'.
+
+
+       01  WS-COPY-REC.
+           05 FILER                         PIC X(08) VALUE IS SPACES.
+           05 WS-LEVAL                      PIC X(02) VALUE IS '01'.
+           05 FILER                         PIC X(01).
+           05 WS-DATA-NAME                  PIC X(10) VALUE 'DAT-REC'.
+           05 FILER                         PIC X(07) VALUE ' PIC X('.
+           05 WS-C-LENGTH                   PIC 9(3) VALUE IS ZEROS.
+           05 FILER                         PIC X(2) VALUE IS ').'.
+
+
+       01  CPY-STRNG                        PIC X(100) VALUE IS SPACES.
+       01  WS-HOLD-CPY-STRNG                PIC X(100) VALUE IS SPACES.
+       01  WS-CNT-RED                       PIC 999 VALUE ZEROS.
+       01  WS-CNT-PIC                       PIC 999 VALUE ZEROS.
+       01  WS-CNT-PICTURE                   PIC 999 VALUE ZEROS.
+       01  WS-CNT-OPN-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-POS-OPN-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-CNT-CLO-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-POS-CLO-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-CNT-DEC-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-POS-DEC-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-CNT-VAL-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-POS-VAL-BRKT                  PIC 999 VALUE ZEROS.
+       01  WS-CNT-DEC-B_VAL                 PIC 999 VALUE ZEROS.
+       01  WS-POS-DEC-B_VAL                 PIC 999 VALUE ZEROS.
+       01  WS-CNT-88-LVL                    PIC 999 VALUE ZEROS.
+       01  WS-HOLD-LVL                      PIC 999 VALUE ZEROS.
+       01  WS-HOLD-NAME                     PIC X(15) VALUE IS SPACES.
+       01  WS-CNT-OCCUR                     PIC 999 VALUE ZEROS.
+       01  WS-OCCUR-POS                     PIC 999 VALUE ZEROS.
+       01  WS-CNT-1                         PIC 999 VALUE 001.
+       01  WS-CNT-2                         PIC 999 VALUE 001.
+       01  WS-CNT-3                         PIC 999 VALUE 001.
+       01  WS-FRST-OCCURENCE                PIC 999 VALUE ZEROS.
+       01  WS-SCND-OCCURENCE                PIC 999 VALUE ZEROS.
+       01  RANGE-1                          PIC 999 VALUE ZEROS.
+       01  RANGE-2                          PIC 999 VALUE ZEROS.
+       01  WS-FACTOR                        PIC 9   VALUE ZERO.
+       01  WS-CNT-COMP-0                    PIC 9   VALUE ZERO.
+       01  WS-CNT-COMP-1                    PIC 9   VALUE ZERO.
+       01  WS-CNT-COMP-2                    PIC 9   VALUE ZERO.
+       01  WS-CNT-COMP-3                    PIC 9   VALUE ZERO.
+       01  FILER-COUNT                      PIC 99  VALUE ZEROS.
+       01  WS-ZERO                          PIC 999 VALUE ZEROS.
+       01  WS-ONE                           PIC 999 VALUE 001.
+       01  WS-START                         PIC 9(5) VALUE 1.
+       01  WS-COMP                          PIC 9   VALUE ZERO .
+       01  WS-COMP-3                        PIC 9   VALUE ZERO .
+       01  WS-DIV                           PIC 999 VALUE ZEROS.
+       01  WS-REM                           PIC 999 VALUE ZEROS.
+       01  READ-COUNT                       PIC 9(8) VALUE ZEROS.
+       01  CARD-READ-CNT                    PIC 9(8) VALUE ZEROS.
+       01  WS-HYPEN-CNT                     PIC 999  VALUE IS ZEROES.
+
+
+       01  WS-HOLD-TABLE.
+           05 WS-HOLD-DETAIL OCCURS 200 TIMES.
+             10 WS-HOLD-SEQ                 PIC 999.
+             10 WS-HOLD-LEVEL-NO            PIC 999.
+             10 WS-HOLD-DATA-TYPE-NAME      PIC X(15).
+             10 WS-HOLD-DESC                PIC X(2).
+             10 WS-HOLD-DATA-TYE            PIC X(22).
+             10 WS-HOLD-TOTAL-LEN           PIC 999.
+             10 WS-HOLD-DECIMAL             PIC X(1).
+             10 WS-HOLD-DECIMAL-POS         PIC 999.
+             10 WS-HOLD-DATA                PIC X(100).
+
+       01  WS-SCRIPT-TABLE.
+           05 WS-DETAIL OCCURS 500 TIMES.
+             10 WS-SEQ                      PIC 999.
+             10 WS-DATA-TYPE-NAME           PIC X(25).
+             10 WS-DATA-TYE                 PIC X(22).
+             10 WS-TOTAL-LEN                PIC 999.
+             10 WS-FLAG-VAL                 PIC X(3) VALUE SPACES.
+             10 WS-DECIMAL                  PIC X(1).
+             10 WS-DECIMAL-POS              PIC 999.
+
+
+       01  WS-CRITERIA-TABLE.
+           05 WS-CRIT OCCURS 50 TIMES.
+             10 WS-CRIT-DESC                PIC X(100).
+
+
+       01  MATCH-TABLE                      PIC X(1) VALUE 'N'.
+           88 WS-1D-TABLE                            VALUE '1'.
+           88 WS-2D-TABLE                            VALUE '2'.
+
+       01  MATCH-STATUS                     PIC X(1) VALUE 'N'.
+           88 NO-MATCH                               VALUE 'N'.
+           88 MATCH-FOUND                            VALUE 'Y'.
+
+       01  HOLD-STATUS                      PIC X(1) VALUE 'F'.
+           88 FIRST-TIME                               VALUE 'F'.
+
+
+       01  MATCH-DATA-TYPE                  PIC X(1) VALUE 'N'.
+           88 WS-NUMERIC                             VALUE '9'.
+           88 WS-CHAR                                VALUE 'A'.
+           88 WS-VARCHAR                             VALUE 'X'.
+
+       01  CRITERIA-DEFINE                  PIC X(1) VALUE ' '.
+           88 WS-CRT-LAST-ROW                        VALUE 'L'.
+           88 WS-CRT-SPACE                           VALUE 'S'.
+           88 WS-CRT-NOO-RANGE                       VALUE 'N'.
+           88 WS-CRT-YES-RANGE                       VALUE 'Y'.
+
+       01  WS-CURRENT-DATE-DATA.
+           05  WS-CURRENT-DATE.
+               10  WS-CURRENT-YEAR          PIC 9(04).
+               10  WS-CURRENT-MONTH         PIC 9(02).
+               10  WS-CURRENT-DAY           PIC 9(02).
+           05  WS-CURRENT-TIME.
+               10  WS-CURRENT-HOURS         PIC 9(02).
+               10  WS-CURRENT-MINUTE        PIC 9(02).
+               10  WS-CURRENT-SECOND        PIC 9(02).
+               10  WS-CURRENT-MILLISECONDS  PIC 9(02).
+
+
+       01  X                                PIC 999 VALUE ZEROS.
+       01  D                                PIC 9(5) VALUE ZEROS.
+       01  Q                                PIC 9(5) VALUE ZEROS.
+       01  WS-S                             PIC 9(3) VALUE 1.
+       01  WS-B                             PIC 9(3) VALUE 0.
+       01  Y                                PIC 999 VALUE ZEROS.
+       01  Z1                               PIC 999 VALUE 001.
+       01  C1                               PIC 999 VALUE 000.
+       01  Z2                               PIC 999 VALUE 001.
+       01  PIC_POS                          PIC 999 VALUE ZEROS.
+       01  SUB-1                            PIC 999 VALUE ZEROS.
+       01  Z                                PIC 99  VALUE ZEROS.
+       01  DISP                             PIC X(1).
+       01  INP-LEN                          PIC 999 VALUE ZEROS.
+       01  LEN-COUNT                        PIC 999 VALUE ZEROS.
+       01  HOLD-COUNT                       PIC 999 VALUE ZEROS.
+       01  IND                              PIC 999 VALUE ZEROS.
+       01  IND1                             PIC 999 VALUE ZEROS.
+       01  IND2                             PIC 999 VALUE ZEROS.
+       01  START-POS                        PIC 999 VALUE ZEROS.
+       01  WS-STR1                          PIC 999 VALUE ZEROS.
+       01  WS-STR2                          PIC X(15) VALUE IS SPACES.
+       01  WS-STR3                          PIC X(15) VALUE IS SPACES.
+       01  WS-STRING                        PIC X(100) VALUE IS SPACES.
+       01  WS-O-STR1                        PIC X(6) VALUE IS SPACES.
+       01  WS-O-STR2                        PIC 999 VALUE ZEROS.
+       01  WS-O-STR3                        PIC X(15) VALUE IS SPACES.
+       01  WS-O-STRING                      PIC X(100) VALUE IS SPACES.
+       01  WS-COPYBOOK-NAME                 PIC X(100).
+       01  WS-FINAL-CRITERIA                PIC X(100).
+       01  WS-FINAL-CRITERIA1               PIC X(100).
+       01  WS-CRITERIA                      PIC X(100).
+       01  WS-CRT-DTL REDEFINES WS-CRITERIA.
+           05 WS-CRT-STRT-POS               PIC X(3).
+           05 FILER                         PIC X.
+           05 WS-CRT-LEN                    PIC X(3).
+           05 FILER                         PIC X.
+           05 WS-CRT-VALUE                  PIC X(94).
+
+       01  WS-FILE-NAMES.
+           05 WS-DATA-FILE-NAME             PIC X(100).
+           05 WS-OUTPUT-FILE-NAME           PIC X(100).
+
+       01  WS-HOLD-CRT-STRT-POS             PIC X(3).
+       01  WS-HOLD-CRT-LEN                  PIC X(3).
+
+       01  WS-EOF-LINE                      PIC 9 VALUE IS ZERO.
+       01  WS-CNT                           PIC 999.
+       01  WS-IDX                           PIC 999 VALUE 7.
+       01  WS-TABLE-DATA.
+           05 WS-DAT1                       PIC X(65) OCCURS 5 TIMES.
+
+       01  WS-TABLE-1.
+           05 WS-R                          PIC X OCCURS 325 TIMES.
+
+       01  EOL-IND                          PIC 9 VALUE 0.
+           88 EOL-NOT-FOUND                       VALUE 1.
+
+
+       PROCEDURE DIVISION.
+      *> MAIN PROGRAM LOGIC STARTED
+           PERFORM 050-READ-CARD-FILE THRU 050-EXIT.
+
+           PERFORM UNTIL WS-CARD-EOF = 'Y'
+             READ CARDFILE
+
+             EVALUATE TRUE
+               WHEN FS-CARD-STATUS = ZEROES AND CARD-REC NOT = SPACES
+                  ADD 1 TO CARD-READ-CNT
+                  PERFORM 052-EXTRACT-NAMES THRU 052-EXIT
+                  PERFORM 055-PROCESS-CARD-FILE THRU 055-EXIT
+               WHEN FS-CARD-STATUS = 10
+                  PERFORM 600-STOP-PGM
+               WHEN FS-CARD-STATUS NOT = ZEROES
+                  DISPLAY 'CARDFILE NOT READ PROPRLY : ' FS-CARD-STATUS
+                  PERFORM 600-STOP-PGM
+             END-EVALUATE
+
+           END-PERFORM.
+
+           PERFORM 600-STOP-PGM.
+
+      *************************************************************
+       600-STOP-PGM.
+           CLOSE INPCPY CARDFILE
+           STOP RUN.
+
+      *************************************************************
+       TEST-PARA-DISPLAY.
+           MOVE WS-ONE TO Z1.
+           PERFORM UNTIL WS-SEQ(Z1) = ZEROS OR WS-SEQ(Z1) = SPACES
+             DISPLAY WS-DETAIL(Z1)
+             ADD WS-ONE TO Z1
+           END-PERFORM.
+
+      *************************************************************
+      *****UDATE THIS COYBOOK WITH ACTUL LENGTH OF COPYBOOK RECORDS
+       UPDATE-COPYBOOK-REC-LENGTH.
+           OPEN OUTPUT COPYCPY.
+
+           IF FS-STATUS4 NOT = '00'
+              DISPLAY 'COPYBOOK FILE NOT OPEN : ' FS-STATUS
+              MOVE 'Y'                      TO WS-EOF
+              PERFORM 600-STOP-PGM
+           ELSE
+              MOVE '        FD DATCPY.'     TO COPY-REC
+              WRITE COPY-DATA
+
+              MOVE C1                       TO WS-C-LENGTH
+              MOVE WS-COPY-REC              TO COPY-REC
+              WRITE COPY-DATA
+
+              IF FS-STATUS4 NOT = '00'
+                 DISPLAY 'COPYBOOK FILE NOT WRITE : ' FS-STATUS
+                 PERFORM 600-STOP-PGM
+              ELSE
+                 CLOSE COPYCPY
+                 MOVE 'N'                   TO WS-EOF
+              END-IF
+           END-IF.
+
+      *************************************************************
+       050-READ-CARD-FILE.
+           OPEN INPUT CARDFILE.
+
+           IF FS-CARD-STATUS NOT = ZEROES
+              DISPLAY 'CARDFILE IS NOT OPEN PROPRLY : ' FS-CARD-STATUS
+              PERFORM 600-STOP-PGM
+           END-IF.
+
+      *****READ THE DATA FILE NAME
+           READ CARDFILE.
+
+           EVALUATE TRUE
+            WHEN FS-CARD-STATUS = ZEROES
+              ADD 1                         TO CARD-READ-CNT
+              MOVE CARD-REC(1:100)          TO WS-DATA-FILE-NAME
+            WHEN FS-CARD-STATUS = 10
+              PERFORM 600-STOP-PGM
+            WHEN FS-CARD-STATUS NOT = ZEROES
+              DISPLAY 'CARDFILE IS NOT READ PROPRLY : ' FS-CARD-STATUS
+              PERFORM 600-STOP-PGM
+           END-EVALUATE.
+
+       050-EXIT.  EXIT.
+
+      *************************************************************
+      *****THIS SECTION WILL EXTRACT COYBOOK NAME OUTUT FILE AND
+      *****WHAT CRITERIA WE ARE USING
+       052-EXTRACT-NAMES.
+           INITIALIZE WS-COPYBOOK-NAME
+                      WS-OUTPUT-FILE-NAME
+                      WS-CRITERIA.
+
+           UNSTRING CARD-REC DELIMITED BY WS-DELIMITER
+                    INTO WS-COPYBOOK-NAME,
+                         WS-OUTPUT-FILE-NAME,
+                         WS-CRITERIA
+           END-UNSTRING.
+
+           INSPECT WS-CRT-VALUE TALLYING WS-HYPEN-CNT FOR ALL '-'.
+
+           IF FIRST-TIME
+              IF WS-CRT-STRT-POS NOT = SPACE
+                 MOVE WS-CRT-STRT-POS       TO WS-HOLD-CRT-STRT-POS
+                 MOVE WS-CRT-LEN            TO WS-HOLD-CRT-LEN
+                 MOVE 'N'                   TO HOLD-STATUS
+              END-IF
+           END-IF.
+
+           EVALUATE TRUE
+            WHEN WS-CRT-STRT-POS = SPACE AND
+                 CARD-READ-CNT = 2
+                 SET WS-CRT-SPACE           TO TRUE
+                 MOVE SPACES                TO WS-FINAL-CRITERIA
+
+            WHEN WS-CRT-STRT-POS NOT = SPACE AND
+                 WS-HYPEN-CNT = ZEROES
+                 SET WS-CRT-NOO-RANGE       TO TRUE
+                 MOVE WS-CRT-VALUE          TO WS-FINAL-CRITERIA
+                 STRING WS-FINAL-CRITERIA1 DELIMITED BY SPACE
+                     ';' DELIMITED BY SIZE
+                     'N' DELIMITED BY SIZE
+                     WS-CRT-VALUE  DELIMITED BY SPACE
+                     INTO WS-FINAL-CRITERIA1
+                 END-STRING
+
+            WHEN WS-CRT-STRT-POS NOT = SPACE AND
+                 WS-HYPEN-CNT > ZEROES
+                 SET WS-CRT-YES-RANGE           TO TRUE
+                 MOVE WS-CRT-VALUE              TO WS-FINAL-CRITERIA
+                 STRING WS-FINAL-CRITERIA1 DELIMITED BY SPACE
+                     ';' DELIMITED BY SIZE
+                     'Y' DELIMITED BY SIZE
+                     WS-CRT-VALUE DELIMITED BY SPACE
+                     INTO WS-FINAL-CRITERIA1
+                 END-STRING
+
+            WHEN WS-CRT-STRT-POS = SPACE AND
+                 CARD-READ-CNT > 2
+                 SET WS-CRT-LAST-ROW            TO TRUE
+                 PERFORM 053-DEFINE-STRING-LAST THRU 053-EXIT
+                 MOVE WS-FINAL-CRITERIA1        TO WS-FINAL-CRITERIA
+                 MOVE WS-HOLD-CRT-STRT-POS      TO WS-CRT-STRT-POS
+                 MOVE WS-HOLD-CRT-LEN           TO WS-CRT-LEN
+           END-EVALUATE.
+
+       052-EXIT.  EXIT.
+
+      *************************************************************
+       055-PROCESS-CARD-FILE.
+           PERFORM 100-OPEN-INPUT.
+           PERFORM 140-INI-TABLE.
+           PERFORM UNTIL WS-EOF = 'Y'
+              PERFORM 101-INITIAL-PARA
+              PERFORM 102-START-CONVERSION-PARA THRU 102-EXIT
+              PERFORM 107-FINAL-INITIAL-PARA
+              PERFORM 100-READ-INPUT THRU 100-EXIT
+           END-PERFORM.
+
+      *     PERFORM TEST-PARA-DISPLAY.
+           PERFORM UPDATE-COPYBOOK-REC-LENGTH.
+
+           CALL 'CLL41' USING WS-SCRIPT-TABLE,
+                              WS-FILE-NAMES,
+                              WS-CRT-STRT-POS,
+                              WS-CRT-LEN,
+                              WS-FINAL-CRITERIA,
+                              CRITERIA-DEFINE.
+
+           PERFORM 999-FINAL-INIT THRU 999-EXIT.
+
+       055-EXIT.  EXIT.
+
+      *************************************************************
+       140-INI-TABLE.
+             PERFORM VARYING Z2 FROM 1 BY 1 UNTIL Z2 > 200
+               MOVE ZEROS        TO  WS-HOLD-SEQ(Z2)
+               MOVE ZEROS        TO  WS-HOLD-LEVEL-NO(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA-TYPE-NAME(Z2)
+               MOVE SPACES       TO  WS-HOLD-DESC(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA-TYE(Z2)
+               MOVE ZEROS        TO  WS-HOLD-TOTAL-LEN(Z2)
+               MOVE SPACES       TO  WS-HOLD-DECIMAL(Z2)
+               MOVE ZEROS        TO  WS-HOLD-DECIMAL-POS(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA(Z2)
+             END-PERFORM.
+
+             PERFORM VARYING Z2 FROM 1 BY 1 UNTIL Z2 > 500
+               MOVE ZEROS        TO  WS-SEQ(Z2)
+               MOVE SPACES       TO  WS-DATA-TYPE-NAME(Z2)
+               MOVE SPACES       TO  WS-DATA-TYE(Z2)
+               MOVE ZEROS        TO  WS-TOTAL-LEN(Z2)
+               MOVE SPACES       TO  WS-DECIMAL(Z2)
+               MOVE ZEROS        TO  WS-DECIMAL-POS(Z2)
+             END-PERFORM.
+
+             MOVE WS-ONE TO Z2.
+
+       *************************************************************
+       141-INI-TABLE.
+             PERFORM VARYING Z2 FROM 1 BY 1 UNTIL Z2 > 200
+               MOVE ZEROS        TO  WS-HOLD-SEQ(Z2)
+               MOVE ZEROS        TO  WS-HOLD-LEVEL-NO(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA-TYPE-NAME(Z2)
+               MOVE SPACES       TO  WS-HOLD-DESC(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA-TYE(Z2)
+               MOVE ZEROS        TO  WS-HOLD-TOTAL-LEN(Z2)
+               MOVE SPACES       TO  WS-HOLD-DECIMAL(Z2)
+               MOVE ZEROS        TO  WS-HOLD-DECIMAL-POS(Z2)
+               MOVE SPACES       TO  WS-HOLD-DATA(Z2)
+             END-PERFORM.
+
+             MOVE WS-ONE TO Z2.
+      *************************************************************
+       100-OPEN-INPUT.
+             OPEN INPUT INPCPY.
+
+             IF FS-STATUS NOT = '00'
+                DISPLAY 'INPCPY FILE NOT OPEN : ' FS-STATUS
+                MOVE 'Y' TO WS-EOF
+             ELSE
+                PERFORM 100-READ-INPUT THRU 100-EXIT
+             END-IF.
+
+      *************************************************************
+       100-READ-INPUT.
+           IF WS-EOF = 'Y'
+              MOVE 'Y' TO WS-EOF
+              GO TO 100-EXIT
+           END-IF.
+
+           INITIALIZE WS-DATA.
+           READ INPCPY INTO WS-DATA.
+
+           EVALUATE TRUE
+              WHEN FS-STATUS = '00'
+                CONTINUE
+              WHEN FS-STATUS = '10'
+                MOVE 'Y' TO WS-EOF
+                GO TO 100-EXIT
+              WHEN FS-STATUS NOT = '00'
+                DISPLAY 'INPCPY FILE IS NOT READ : '  FS-STATUS
+                MOVE 'Y' TO WS-EOF
+                GO TO 100-EXIT
+           END-EVALUATE.
+
+           IF WS-DATA(7:1) = '*' OR WS-DATA = SPACES
+                GO TO 100-READ-INPUT
+           END-IF.
+
+           IF WS-EOF NOT = 'Y'
+              INITIALIZE WS-EOF-LINE
+              INSPECT WS-DATA(8:65) TALLYING WS-EOF-LINE FOR ALL '. '
+
+              IF WS-DATA(72:1) = '.'
+                 ADD 1 TO WS-EOF-LINE
+              END-IF
+
+              IF WS-EOF-LINE > 0 OR FS-STATUS = '10'
+                 CONTINUE
+              ELSE
+                 SET EOL-NOT-FOUND TO TRUE
+                 ADD 1 TO WS-CNT
+                 INSPECT WS-DATA REPLACING ALL 'INDEXED BY' BY SPACE
+                 MOVE FUNCTION TRIM(WS-DATA(8:65)) TO WS-DAT1(WS-CNT)
+                 GO TO 100-READ-INPUT
+              END-IF
+
+              IF EOL-NOT-FOUND
+                ADD 1 TO WS-CNT
+                INSPECT WS-DATA REPLACING ALL 'INDEXED BY' BY SPACE
+                MOVE FUNCTION TRIM(WS-DATA(8:65)) TO WS-DAT1(WS-CNT)
+                PERFORM CHECK-END-OF-LINE-PARA
+                MOVE 0 TO EOL-IND WS-CNT
+                MOVE 7 TO WS-IDX
+              END-IF
+           END-IF.
+
+       100-EXIT.  EXIT.
+      *************************************************************
+      *****THIS SECTION CHECK AND COMBINED TWO ROWS UNTIL PERIOD FOUND
+       CHECK-END-OF-LINE-PARA.
+           MOVE WS-TABLE-DATA TO WS-TABLE-1.
+
+           INITIALIZE WS-DATA.
+
+           PERFORM VARYING WS-CNT FROM 1 BY 1 UNTIL WS-CNT > 325
+             IF WS-CNT = 1
+                ADD 1 TO WS-IDX
+                MOVE WS-R(WS-CNT) TO WS-DATA(WS-IDX : 1)
+             ELSE
+                EVALUATE TRUE
+                  WHEN  WS-R(WS-CNT) = SPACE AND
+                        WS-R(WS-CNT - 1) NOT = SPACE
+                        ADD 1 TO WS-IDX
+                        MOVE WS-R(WS-CNT) TO WS-DATA(WS-IDX : 1)
+                  WHEN  WS-R(WS-CNT) = SPACE AND
+                        WS-R(WS-CNT - 1) = SPACE
+                        CONTINUE
+                  WHEN  WS-R(WS-CNT) NOT = SPACE
+                        ADD 1 TO WS-IDX
+                        MOVE WS-R(WS-CNT) TO WS-DATA(WS-IDX : 1)
+                END-EVALUATE
+             END-IF
+
+           END-PERFORM.
+
+      *************************************************************
+       101-INITIAL-PARA.
+             MOVE SPACES        TO CPY-STRNG.
+             MOVE ZEROS         TO WS-CNT-PICTURE.
+             MOVE WS-REC(1:72)  TO CPY-STRNG.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-PICTURE
+                                    FOR ALL ' PICTURE '.
+
+             IF WS-CNT-PICTURE > ZEROS
+               INSPECT CPY-STRNG REPLACING ALL ' PICTURE' BY ' PIC    '
+             END-IF.
+
+             COMPUTE INP-LEN = LENGTH OF CPY-STRNG.
+
+             INITIALIZE Y.
+             MOVE 8 TO Y.
+
+             IF CPY-STRNG > SPACE
+                PERFORM  UNTIL CPY-STRNG(Y:1)  > ' '
+                  COMPUTE Y = Y + 1
+                END-PERFORM
+             END-IF.
+
+             INITIALIZE WS-STRING WS-STR2 WS-STR3.
+
+             MOVE ZEROS                    TO WS-STR1.
+             MOVE CPY-STRNG(Y:INP-LEN - Y) TO WS-STRING.
+
+             UNSTRING WS-STRING DELIMITED BY ALL SPACE
+               INTO WS-STR1, WS-STR2, WS-STR3
+             END-UNSTRING.
+
+      *************************************************************
+       053-DEFINE-STRING-LAST.
+       053-EXIT.  EXIT.
+
+      *************************************************************
+       999-FINAL-INIT.
+           CLOSE INPCPY.
+           INITIALIZE C1 IND IND1.
+
+       999-EXIT.  EXIT.
+
+      *************************************************************
+       107-FINAL-INITIAL-PARA.
+             MOVE ZEROS TO X Z
+                           PIC_POS
+                           SUB-1
+                           INP-LEN
+                           LEN-COUNT
+                           HOLD-COUNT
+                           START-POS
+                           WS-CNT-RED
+                           WS-CNT-PIC
+                           WS-CNT-OPN-BRKT
+                           WS-POS-OPN-BRKT
+                           WS-CNT-CLO-BRKT
+                           WS-POS-CLO-BRKT
+                           WS-CNT-DEC-BRKT
+                           WS-POS-DEC-BRKT
+                           WS-CNT-VAL-BRKT
+                           WS-POS-VAL-BRKT
+                           WS-CNT-DEC-B_VAL
+                           WS-POS-DEC-B_VAL
+                           WS-CNT-88-LVL
+                           WS-CNT-PICTURE
+                           WS-CNT-OCCUR
+                           WS-OCCUR-POS
+                           WS-HOLD-LVL
+                           WS-CNT-COMP-1
+                           WS-CNT-COMP-2
+                           WS-CNT-COMP-0
+                           WS-CNT-COMP-3
+                           IND1
+                           WS-CNT-1
+                           WS-CNT-2
+                           WS-CNT-3
+                           WS-STR1.
+
+             MOVE SPACES TO WS-STR2
+                            WS-STR3
+                            WS-STRING
+                            DISP.
+
+             MOVE 'N' TO MATCH-DATA-TYPE.
+
+      *************************************************************
+      *****DETREMINE BYPASS RECORDS IF 88 & REDEFINES FOUND
+      *****IF OCCURS FOUND THEN PROCESS 1-D & 2-D TABLE CHECK
+       102-START-CONVERSION-PARA.
+             IF WS-EOF = 'Y'
+                GO TO 102-EXIT
+             END-IF.
+
+             INITIALIZE  WS-CNT-RED
+                         WS-CNT-PIC
+                         WS-CNT-88-LVL
+                         WS-CNT-OCCUR
+                         WS-CNT-COMP-1
+                         WS-CNT-COMP-2
+                         WS-CNT-COMP-3
+                         WS-CNT-COMP-0.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-RED
+                              FOR ALL ' REDEFINES '.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-PIC
+                              FOR ALL ' PIC '.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-88-LVL
+                              FOR ALL ' 88 '.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-OCCUR
+                              FOR ALL ' OCCURS '.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-COMP-1
+                              FOR ALL ' COMP-1'.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-COMP-2
+                              FOR ALL ' COMP-2'.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-COMP-3
+                              FOR ALL ' COMP-3'.
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-COMP-0
+                              FOR ALL ' COMP '.
+
+             IF WS-CNT-COMP-0 = 0
+                 INSPECT CPY-STRNG TALLYING WS-CNT-COMP-0
+                              FOR ALL ' COMP.'
+             END-IF.
+
+             IF CPY-STRNG(7:1) = '*'
+                GO TO 102-EXIT
+             END-IF.
+
+             IF WS-CNT-88-LVL > ZEROS
+                GO TO 102-EXIT
+             END-IF.
+
+             IF WS-CNT-RED > ZEROS AND WS-CNT-PIC > ZEROS
+                GO TO 102-EXIT
+             END-IF.
+
+             IF WS-CNT-OCCUR > ZEROS
+                PERFORM 151-OCCUR-RECORDS THRU 151-EXIT
+                IF WS-EOF NOT = 'Y'
+                   PERFORM 101-INITIAL-PARA
+                   IF WS-STR1 NOT = ZEROS
+                      GO TO 102-START-CONVERSION-PARA
+                   ELSE
+                      GO TO 102-EXIT
+                    END-IF
+                 ELSE
+                     GO TO 102-EXIT
+                 END-IF
+             END-IF.
+
+             IF WS-CNT-RED > ZEROS AND WS-CNT-PIC = ZEROS
+                PERFORM 150-SKIP-RECORDS THRU 150-EXIT
+                GO TO 102-START-CONVERSION-PARA
+             END-IF.
+
+             IF (WS-CNT-RED = ZEROS AND WS-CNT-PIC > ZEROS)
+                             OR
+                (WS-CNT-COMP-1 > ZEROS OR WS-CNT-COMP-2 > ZEROS)
+                PERFORM 200-INSIDE-CON-PARA THRU 200-EXIT
+                GO TO 102-EXIT
+             END-IF
+
+             MOVE WS-STR1 TO WS-HOLD-LVL.
+
+       102-EXIT.  EXIT.
+
+      *************************************************************
+       150-SKIP-RECORDS.
+             PERFORM 100-READ-INPUT THRU 100-EXIT.
+             PERFORM 101-INITIAL-PARA.
+             MOVE WS-STR1 TO WS-HOLD-LVL.
+
+             PERFORM UNTIL WS-STR1 NOT = WS-HOLD-LVL
+               PERFORM 100-READ-INPUT THRU 100-EXIT
+               PERFORM 101-INITIAL-PARA
+             END-PERFORM.
+
+             MOVE ZEROS TO WS-CNT-RED.
+             MOVE ZEROS TO WS-CNT-PIC.
+             MOVE ZEROS TO WS-CNT-88-LVL.
+       150-EXIT.  EXIT.
+
+      *************************************************************
+       151-OCCUR-RECORDS.
+              INITIALIZE WS-HOLD-LVL
+                         WS-HOLD-NAME.
+
+              MOVE WS-STR1 TO WS-HOLD-LVL.
+              MOVE WS-STR2 TO WS-HOLD-NAME.
+
+              ADD WS-ONE   TO IND1.
+
+              IF IND1 > 200
+                 DISPLAY 'OUT OF BOUND HOLD TABLE'
+                 PERFORM 600-STOP-PGM
+              END-IF.
+
+              MOVE IND1 TO WS-HOLD-SEQ(IND1).
+              PERFORM 165-MOVE-HOLD-DATA.
+
+              IF WS-CNT-PIC > ZEROS
+                 MOVE WS-STR1 TO WS-HOLD-LVL
+                 MOVE WS-STR2 TO WS-HOLD-NAME
+                 MOVE 'OP'    TO WS-HOLD-DESC(IND1)
+                 MOVE ZEROS TO WS-CNT-OCCUR
+                 PERFORM 162-READ-UNTIL-LEVEL-CHANGE THRU 162-EXIT
+              ELSE
+                 INITIALIZE WS-STR1                                                                                                                                               04070000
+                 MOVE ZEROS TO WS-CNT-OCCUR WS-CNT-PIC
+                 PERFORM 164-READ-UNTIL-OCCUR-FOUND THRU 164-EXIT
+              END-IF.
+
+
+              IF WS-EOF = 'Y'
+                 MOVE ZEROS TO WS-CNT-OCCUR
+              END-IF.
+
+              MOVE 'N' TO MATCH-TABLE.
+
+              IF WS-CNT-OCCUR > ZEROS
+                   SET WS-2D-TABLE TO TRUE
+              ELSE
+                   SET WS-1D-TABLE TO TRUE
+              END-IF.
+
+              MOVE ZEROS TO WS-CNT-OCCUR.
+              MOVE ZEROS TO WS-CNT-PIC.
+              INITIALIZE WS-HOLD-LVL.
+              INITIALIZE WS-HOLD-NAME.
+              MOVE WS-STR1 TO WS-HOLD-LVL.
+              MOVE WS-STR2 TO WS-HOLD-NAME.
+
+             IF WS-2D-TABLE
+                ADD WS-ONE TO IND1
+                IF IND1 > 200
+                   DISPLAY 'OUT OF BOUND HOLD TABLE'
+                   PERFORM 600-STOP-PGM
+                END-IF
+
+                MOVE IND1 TO WS-HOLD-SEQ(IND1)
+                PERFORM 165-MOVE-HOLD-DATA
+                INSPECT CPY-STRNG TALLYING WS-CNT-PIC
+                                    FOR ALL ' PIC '
+                IF WS-CNT-PIC > ZEROS
+                   MOVE WS-STR1 TO WS-HOLD-LVL
+                   MOVE WS-STR2 TO WS-HOLD-NAME
+                   MOVE 'OP' TO WS-HOLD-DESC(IND1)
+                ELSE
+                   MOVE ZEROS TO WS-CNT-PIC
+                   PERFORM 163-READ-UNTIL-PIC-FOUND
+                   MOVE ZEROS TO WS-CNT-PIC
+
+                   IF WS-STR1 NOT = ZEROS
+                      MOVE WS-STR1 TO WS-HOLD-LVL
+                      MOVE WS-STR2 TO WS-HOLD-NAME
+                   END-IF
+
+                   ADD WS-ONE TO IND1
+                   IF IND1 > 200
+                      DISPLAY 'OUT OF BOUND HOLD TABLE'
+                      PERFORM 600-STOP-PGM
+                   END-IF
+
+                   MOVE IND1 TO WS-HOLD-SEQ(IND1)
+                   MOVE CPY-STRNG    TO WS-HOLD-DATA(IND1)
+                   MOVE WS-HOLD-LVL  TO WS-HOLD-LEVEL-NO(IND1)
+                   MOVE WS-HOLD-NAME TO WS-HOLD-DATA-TYPE-NAME(IND1)
+                   MOVE 'PP' TO WS-HOLD-DESC(IND1)
+                END-IF
+
+                MOVE ZEROS TO WS-CNT-OCCUR
+                PERFORM 164-READ-UNTIL-OCCUR-FOUND THRU 164-EXIT
+                MOVE ZEROS TO WS-CNT-OCCUR
+             END-IF.
+
+             INITIALIZE WS-HOLD-CPY-STRNG.
+             MOVE CPY-STRNG TO WS-HOLD-CPY-STRNG.
+             INITIALIZE CPY-STRNG.
+
+             IF WS-1D-TABLE
+                   PERFORM 152-WS-1D-TABLE-PROCESSING
+                                  THRU 152-EXIT
+             ELSE
+                   PERFORM 153-WS-2D-TABLE-PROCESSING
+                                  THRU 153-EXIT
+             END-IF.
+
+             INITIALIZE WS-DATA.
+             MOVE WS-HOLD-CPY-STRNG TO WS-DATA.
+
+             PERFORM 141-INI-TABLE.
+
+       151-EXIT.  EXIT.
+
+      *************************************************************
+       152-WS-1D-TABLE-PROCESSING.
+             MOVE WS-HOLD-DATA(WS-ONE) TO CPY-STRNG.
+             SET NO-MATCH TO TRUE.
+             MOVE ZEROS TO X.
+
+             PERFORM 161-GET-OCCUR-POSITION
+                THRU 161-EXIT
+                UNTIL X = LENGTH OF CPY-STRNG OR MATCH-FOUND.
+
+             PERFORM 162-GET-OCCURENCE.
+
+             MOVE ZEROS TO WS-FRST-OCCURENCE.
+             MOVE WS-O-STR2 TO WS-FRST-OCCURENCE.
+
+             PERFORM VARYING WS-CNT-1 FROM WS-ONE BY 1
+                        UNTIL WS-CNT-1 > WS-FRST-OCCURENCE
+                PERFORM VARYING WS-CNT-2 FROM WS-ONE BY 1
+                    UNTIL WS-HOLD-LEVEL-NO(WS-CNT-2) = ZEROS
+                  IF WS-HOLD-DESC(WS-CNT-2) = 'OP' OR 'PP'
+                     SET NO-MATCH TO TRUE
+                     INITIALIZE CPY-STRNG X
+                     MOVE WS-HOLD-DATA(WS-CNT-2) TO
+                                         CPY-STRNG
+                     PERFORM 200-INSIDE-CON-PARA
+                                       THRU 200-EXIT
+                     MOVE 1 TO WS-FACTOR
+                     PERFORM 166-GET-TABLE-VAR-NAMES
+                  END-IF
+                END-PERFORM
+             END-PERFORM.
+
+       152-EXIT.  EXIT.
+
+      *************************************************************
+       153-WS-2D-TABLE-PROCESSING.
+             MOVE WS-HOLD-DATA(WS-ONE) TO CPY-STRNG
+             SET NO-MATCH TO TRUE
+             MOVE ZEROS TO X
+             PERFORM 161-GET-OCCUR-POSITION
+                         THRU 161-EXIT
+                UNTIL X = LENGTH OF CPY-STRNG OR
+                             MATCH-FOUND
+             PERFORM 162-GET-OCCURENCE
+             MOVE ZEROS TO WS-FRST-OCCURENCE
+
+             INITIALIZE CPY-STRNG
+             MOVE ZEROS TO WS-CNT-OCCUR
+             MOVE WS-ONE TO WS-CNT-1
+             PERFORM VARYING WS-CNT-1 FROM 2 BY 1
+                        UNTIL WS-CNT-OCCUR > ZEROS OR
+                        WS-HOLD-LEVEL-NO(WS-CNT-1) = ZEROS
+                  MOVE WS-HOLD-DATA(WS-CNT-1) TO CPY-STRNG
+                  INSPECT CPY-STRNG TALLYING WS-CNT-OCCUR
+                          FOR ALL ' OCCURS '
+             END-PERFORM
+
+             INITIALIZE CPY-STRNG
+      *      MOVE WS-HOLD-DATA(WS-CNT-1 - WS-ONE) TO
+             MOVE WS-HOLD-DATA(WS-CNT-1 - 001) TO
+                           CPY-STRNG
+             COMPUTE RANGE-1 = WS-CNT-1 - WS-ONE
+             COMPUTE RANGE-2 = RANGE-1 - WS-ONE
+             SET NO-MATCH TO TRUE.
+             MOVE ZEROS TO X
+             PERFORM 161-GET-OCCUR-POSITION
+                         THRU 161-EXIT
+                UNTIL X = LENGTH OF CPY-STRNG OR
+                            MATCH-FOUND
+             PERFORM 162-GET-OCCURENCE
+             MOVE ZEROS TO WS-SCND-OCCURENCE
+             MOVE WS-O-STR2 TO WS-SCND-OCCURENCE
+
+             MOVE ZEROS TO WS-CNT-OCCUR
+             MOVE WS-ONE TO WS-CNT-1
+
+             PERFORM VARYING WS-CNT-1 FROM 1 BY 1
+                 UNTIL WS-CNT-1 > WS-FRST-OCCURENCE
+                 MOVE 1 TO WS-FACTOR
+               PERFORM VARYING WS-CNT-2 FROM 1 BY 1 UNTIL
+                 WS-HOLD-SEQ(WS-CNT-2) > RANGE-2
+                 IF WS-HOLD-DESC(WS-CNT-2) = 'PP'
+                     SET NO-MATCH TO TRUE
+                     INITIALIZE CPY-STRNG X
+                     MOVE WS-HOLD-DATA(WS-CNT-2) TO CPY-STRNG
+                     PERFORM 200-INSIDE-CON-PARA THRU 200-EXIT
+                     PERFORM 166-GET-TABLE-VAR-NAMES
+                 END-IF
+               END-PERFORM
+
+               MOVE 2 TO WS-FACTOR
+
+               PERFORM VARYING WS-CNT-3 FROM 1 BY 1
+                   UNTIL WS-CNT-3 > WS-SCND-OCCURENCE
+                PERFORM VARYING WS-CNT-2 FROM RANGE-1 BY 1
+                    UNTIL WS-HOLD-SEQ(WS-CNT-2) = ZEROS
+                  IF WS-HOLD-DESC(WS-CNT-2) =  'PP'
+                     SET NO-MATCH TO TRUE
+                     INITIALIZE CPY-STRNG X
+                     MOVE WS-HOLD-DATA(WS-CNT-2) TO
+                                         CPY-STRNG
+                     PERFORM 200-INSIDE-CON-PARA
+                                       THRU 200-EXIT
+                     PERFORM 166-GET-TABLE-VAR-NAMES
+                  END-IF
+                 END-PERFORM
+                END-PERFORM
+             END-PERFORM.
+
+       153-EXIT.  EXIT.
+
+      *************************************************************
+       163-READ-UNTIL-PIC-FOUND.
+             PERFORM UNTIL WS-CNT-PIC > ZEROS
+               PERFORM 100-READ-INPUT THRU 100-EXIT
+               PERFORM 101-INITIAL-PARA
+               INSPECT CPY-STRNG TALLYING WS-CNT-PIC
+                       FOR ALL ' PIC '
+             END-PERFORM.
+
+      *************************************************************
+       162-READ-UNTIL-LEVEL-CHANGE.
+           PERFORM UNTIL WS-STR1 NOT = WS-HOLD-LVL OR
+                         WS-CNT-OCCUR > ZEROS
+
+               INITIALIZE WS-DATA
+               READ INPCPY INTO WS-DATA
+
+               EVALUATE TRUE
+                 WHEN FS-STATUS = '00'
+                   CONTINUE
+                 WHEN FS-STATUS = '10'
+                   MOVE 'Y' TO WS-EOF
+                   GO TO 164-EXIT
+                   PERFORM 600-STOP-PGM
+                 WHEN FS-STATUS NOT = '00'
+                   DISPLAY 'INPCPY FILE IS NOT READ : '  FS-STATUS
+                   MOVE 'Y' TO WS-EOF
+                END-EVALUATE
+
+               PERFORM 101-INITIAL-PARA
+
+
+               INSPECT CPY-STRNG TALLYING WS-CNT-OCCUR
+                       FOR ALL ' OCCURS '
+
+               IF WS-EOF NOT = 'Y' AND
+                  WS-CNT-OCCUR = ZEROS AND
+                  WS-STR1  = WS-HOLD-LVL
+                  ADD WS-ONE TO IND1
+                  IF IND1 > 200
+                    DISPLAY 'OUT OF BOUND HOLD TABLE'
+                    PERFORM 600-STOP-PGM
+                  END-IF
+                  MOVE IND1 TO WS-HOLD-SEQ(IND1)
+                  MOVE CPY-STRNG    TO WS-HOLD-DATA(IND1)
+                  MOVE WS-STR1  TO WS-HOLD-LEVEL-NO(IND1)
+                  MOVE WS-STR2 TO WS-HOLD-DATA-TYPE-NAME(IND1)
+                  MOVE 'PP' TO WS-HOLD-DESC(IND1)
+               END-IF
+
+               IF WS-EOF = 'Y'
+                 MOVE WS-ONE TO WS-CNT-OCCUR
+               END-IF
+           END-PERFORM.
+       162-EXIT.  EXIT.
+
+      *************************************************************
+       164-READ-UNTIL-OCCUR-FOUND.
+           PERFORM UNTIL WS-STR1 = WS-HOLD-LVL OR
+                         WS-CNT-OCCUR > ZEROS
+
+               INITIALIZE WS-DATA
+               READ INPCPY INTO WS-DATA
+
+               EVALUATE TRUE
+                 WHEN FS-STATUS = '00'
+                   CONTINUE
+                 WHEN FS-STATUS = '10'
+                   MOVE 'Y' TO WS-EOF
+                   GO TO 164-EXIT
+                   PERFORM 600-STOP-PGM
+                 WHEN FS-STATUS NOT = '00'
+                   DISPLAY 'INPCPY FILE IS NOT READ : '  FS-STATUS
+                   MOVE 'Y' TO WS-EOF
+                END-EVALUATE
+
+               PERFORM 101-INITIAL-PARA
+
+               INITIALIZE WS-CNT-PIC
+
+               INSPECT CPY-STRNG TALLYING WS-CNT-PIC                                                                                                                                           04430000
+                       FOR ALL ' PIC '
+
+               INSPECT CPY-STRNG TALLYING WS-CNT-OCCUR
+                       FOR ALL ' OCCURS '
+
+               IF WS-STR1 < WS-HOLD-LVL
+                  MOVE WS-STR1 TO  WS-HOLD-LVL
+               END-IF
+
+               IF WS-EOF NOT = 'Y' AND
+                  WS-CNT-OCCUR = ZEROS AND
+                  WS-CNT-PIC > ZEROES AND
+                  WS-STR1 NOT = WS-HOLD-LVL
+                  ADD WS-ONE TO IND1
+                  IF IND1 > 200
+                    DISPLAY 'OUT OF BOUND HOLD TABLE'
+                    PERFORM 600-STOP-PGM
+                  END-IF
+                  MOVE IND1 TO WS-HOLD-SEQ(IND1)
+                  MOVE CPY-STRNG    TO WS-HOLD-DATA(IND1)
+                  MOVE WS-STR1  TO WS-HOLD-LEVEL-NO(IND1)
+                  MOVE WS-STR2 TO WS-HOLD-DATA-TYPE-NAME(IND1)
+                  MOVE 'PP' TO WS-HOLD-DESC(IND1)
+               END-IF
+
+               IF WS-EOF = 'Y'
+                 MOVE WS-ONE TO WS-CNT-OCCUR
+               END-IF
+           END-PERFORM.
+       164-EXIT.  EXIT.
+
+
+      *************************************************************
+       165-MOVE-HOLD-DATA.
+             MOVE CPY-STRNG TO WS-HOLD-DATA(IND1).
+             MOVE WS-STR1 TO WS-HOLD-LEVEL-NO(IND1).
+             MOVE WS-STR2 TO WS-HOLD-DATA-TYPE-NAME(IND1).
+
+      *************************************************************
+       166-GET-TABLE-VAR-NAMES.
+             EVALUATE TRUE
+               WHEN WS-FACTOR = 1
+                INITIALIZE WS-DATA-TYPE-NAME(IND)
+                STRING
+                    WS-HOLD-DATA-TYPE-NAME(WS-CNT-2)
+                    DELIMITED BY SPACE
+                  '-' DELIMITED BY SIZE WS-CNT-1 DELIMITED BY SPACE
+                    INTO WS-DATA-TYPE-NAME(IND)
+                END-STRING
+
+               WHEN WS-FACTOR = 2
+                INITIALIZE WS-DATA-TYPE-NAME(IND)
+                STRING
+                    WS-HOLD-DATA-TYPE-NAME(WS-CNT-2)
+                                       DELIMITED BY SPACE
+                    '-' DELIMITED BY SIZE
+                    WS-CNT-1 DELIMITED BY SPACE
+                    '-' DELIMITED BY SIZE
+                    WS-CNT-3 DELIMITED BY SPACE
+                    INTO WS-DATA-TYPE-NAME(IND)
+                END-STRING
+             END-EVALUATE.
+
+      *************************************************************
+       200-INSIDE-CON-PARA.
+             INITIALIZE LEN-COUNT HOLD-COUNT X
+             SET NO-MATCH TO TRUE
+
+             PERFORM 201-GET-PIC-POSITION
+                         THRU 201-EXIT
+                  UNTIL X = LENGTH OF  CPY-STRNG OR
+                            MATCH-FOUND
+
+             EVALUATE TRUE
+               WHEN MATCH-FOUND
+                    ADD WS-ONE TO IND
+                    IF IND > 500
+                       DISPLAY 'OUT OF BOUND SCRIPT TABLE'
+                       PERFORM 600-STOP-PGM
+                    END-IF
+                    PERFORM DETERMINE-DATA-TYPE-PARA
+               WHEN WS-CNT-COMP-1 > ZEROS
+               WHEN WS-CNT-COMP-2 > ZEROS
+                    ADD WS-ONE TO IND
+                    IF IND > 500
+                       DISPLAY 'OUT OF BOUND SCRIPT TABLE'
+                       PERFORM 600-STOP-PGM
+                    END-IF
+               WHEN OTHER
+                    GO TO 200-EXIT
+             END-EVALUATE.
+
+             PERFORM 250-CALCUATION-PARA.
+
+       200-EXIT.  EXIT.
+
+      *************************************************************
+       250-CALCUATION-PARA.
+             EVALUATE TRUE
+               WHEN WS-CNT-COMP-1 > ZEROS
+                    MOVE 4     TO LEN-COUNT
+                    MOVE 'N' TO MATCH-DATA-TYPE
+                    PERFORM 2044-FILL-TABLE
+                    ADD LEN-COUNT TO C1
+               WHEN WS-CNT-COMP-2 > ZEROS
+                    MOVE 8     TO LEN-COUNT
+                    MOVE 'N' TO MATCH-DATA-TYPE
+                    PERFORM 2044-FILL-TABLE
+                    ADD LEN-COUNT TO C1
+               WHEN CPY-STRNG(X:1) = '9'
+               WHEN CPY-STRNG(X:2) = 'S9'
+               WHEN CPY-STRNG(X:2) = 'V9'
+                    MOVE X TO START-POS
+                    SET WS-NUMERIC TO TRUE
+                    PERFORM 203-INITIALIZE-INDICATOR
+                    PERFORM 204-DETERMINE-CASE
+                    PERFORM 2044-FILL-TABLE
+                    ADD LEN-COUNT TO C1
+
+
+               WHEN CPY-STRNG(X:1) = 'X'
+                    SET WS-VARCHAR TO TRUE
+                    PERFORM 203-INITIALIZE-INDICATOR
+                    PERFORM 204-DETERMINE-CASE
+                    PERFORM 2044-FILL-TABLE
+                    ADD LEN-COUNT TO C1
+               WHEN CPY-STRNG(X:1) = 'A'
+                    SET WS-CHAR TO TRUE
+                    PERFORM 203-INITIALIZE-INDICATOR
+                    PERFORM 204-DETERMINE-CASE
+                    PERFORM 2044-FILL-TABLE
+                    ADD LEN-COUNT TO C1
+               WHEN OTHER
+                    DISPLAY 'NOT A VALID DATA TYPE'
+             END-EVALUATE.
+
+      *************************************************************
+       2044-FILL-TABLE.
+             MOVE IND            TO WS-SEQ(IND)
+             MOVE LEN-COUNT      TO WS-TOTAL-LEN(IND)
+             MOVE WS-STR2        TO WS-DATA-TYPE-NAME(IND)
+             INITIALIZE             WS-FLAG-VAL(IND)
+
+
+             IF WS-CNT-COMP-1 > ZEROS
+                MOVE 'REAL'      TO WS-DATA-TYE(IND)
+                MOVE 'FC1'       TO WS-FLAG-VAL(IND)
+             END-IF
+
+             IF WS-CNT-COMP-2 > ZEROS
+                MOVE 'FLOAT'     TO WS-DATA-TYE(IND)
+                MOVE 'FC2'       TO WS-FLAG-VAL(IND)
+             END-IF
+             IF WS-CNT-COMP-0 > ZEROS
+                *> MOVE 'FLOAT'  TO WS-DATA-TYE(IND)
+                MOVE 'FC0'       TO WS-FLAG-VAL(IND)
+             END-IF
+             IF WS-CNT-COMP-3 > ZEROS
+                MOVE 'FC3'       TO WS-FLAG-VAL(IND)
+             END-IF
+
+
+             IF  WS-NUMERIC AND WS-DECIMAL(IND) = 'N'
+                    MOVE 'INT' TO WS-DATA-TYE(IND)
+             END-IF
+
+             IF  WS-NUMERIC AND WS-DECIMAL(IND) = 'Y'
+                    MOVE 'DECIMAL' TO WS-DATA-TYE(IND)
+             END-IF
+
+             IF  WS-CHAR
+                    MOVE 'CHAR' TO WS-DATA-TYE(IND)
+             END-IF
+
+             IF  WS-VARCHAR
+                    MOVE 'VARCHAR' TO WS-DATA-TYE(IND)
+             END-IF.
+
+      *************************************************************
+       DETERMINE-DATA-TYPE-PARA.
+             INITIALIZE X.
+             MOVE PIC_POS TO X.
+             PERFORM  UNTIL CPY-STRNG(X:1)  > ' '
+                COMPUTE X = X + 1
+             END-PERFORM.
+
+      *************************************************************
+       161-GET-OCCUR-POSITION.
+             COMPUTE X = X + 1.
+             IF CPY-STRNG(X:6) = 'OCCURS'
+                SET MATCH-FOUND TO TRUE
+                MOVE X  TO WS-OCCUR-POS
+             END-IF.
+       161-EXIT.  EXIT.
+
+      *************************************************************
+       162-GET-OCCURENCE.
+             INITIALIZE WS-O-STRING.
+             MOVE CPY-STRNG(WS-OCCUR-POS :
+             INP-LEN - WS-OCCUR-POS) TO WS-O-STRING
+
+             UNSTRING WS-O-STRING DELIMITED BY ALL SPACE
+                 INTO WS-O-STR1,
+                      WS-O-STR2,
+                      WS-O-STR3
+             END-UNSTRING.
+
+      *************************************************************
+       201-GET-PIC-POSITION.
+             COMPUTE X = X + 1.
+             IF CPY-STRNG(X:4) = ' PIC'
+                SET MATCH-FOUND TO TRUE
+                MOVE X  TO PIC_POS
+                ADD 4 TO PIC_POS
+             END-IF.
+       201-EXIT.  EXIT.
+      *************************************************************
+      *ALI
+       205-GET-VAR-LEN.
+             EVALUATE TRUE
+               WHEN CPY-STRNG(SUB-1:1) = ' '
+                    CONTINUE
+               WHEN CPY-STRNG(SUB-1:1) = '9'
+                    ADD 1 TO LEN-COUNT
+               WHEN CPY-STRNG(SUB-1:1) = 'X'
+                    ADD 1 TO LEN-COUNT
+               WHEN CPY-STRNG(SUB-1:1) = 'A'
+                    ADD 1 TO LEN-COUNT
+               WHEN OTHER
+                    CONTINUE
+             END-EVALUATE.
+       205-EXIT.  EXIT.
+
+      *************************************************************
+       203-INITIALIZE-INDICATOR.
+             INITIALIZE WS-CNT-OPN-BRKT
+                        WS-CNT-CLO-BRKT
+                        WS-CNT-DEC-BRKT
+                        WS-CNT-DEC-B_VAL
+                        WS-CNT-VAL-BRKT
+                        WS-POS-OPN-BRKT
+                        WS-POS-CLO-BRKT
+                        WS-POS-DEC-BRKT
+                        WS-POS-VAL-BRKT
+                        WS-COMP
+                        WS-COMP-3
+
+             INSPECT CPY-STRNG TALLYING WS-CNT-OPN-BRKT
+                          FOR ALL '('
+             INSPECT CPY-STRNG TALLYING WS-CNT-CLO-BRKT
+                 FOR ALL ')'
+             INSPECT CPY-STRNG TALLYING WS-CNT-DEC-BRKT
+                          FOR  ALL 'V' AFTER 'PIC'
+             INSPECT CPY-STRNG TALLYING WS-CNT-DEC-B_VAL
+                  FOR ALL 'V' AFTER 'PIC' BEFORE 'VALUE'
+             INSPECT CPY-STRNG TALLYING WS-CNT-VAL-BRKT
+                          FOR ALL 'VALUE' AFTER 'PIC'
+             INSPECT CPY-STRNG TALLYING WS-COMP-3
+                          FOR ALL ' COMP-3' AFTER 'PIC'
+             INSPECT CPY-STRNG TALLYING WS-COMP
+                          FOR ALL ' COMP.' AFTER 'PIC'
+
+             IF WS-COMP = ZEROS
+                INSPECT CPY-STRNG TALLYING WS-COMP
+                               FOR ALL ' COMP ' AFTER 'PIC'
+             END-IF
+
+      *  OPENING BREAKET SEARCH
+             MOVE ZEROS TO X
+             SET NO-MATCH TO TRUE
+             PERFORM VARYING X FROM PIC_POS BY 1
+                        UNTIL X = INP-LEN OR MATCH-FOUND
+                IF CPY-STRNG(X:1) = '('
+                   SET MATCH-FOUND TO TRUE
+                   INITIALIZE WS-POS-OPN-BRKT
+                   MOVE X TO WS-POS-OPN-BRKT
+                END-IF
+             END-PERFORM.
+
+      *  CLOSEING BREAKET SEARCH
+             MOVE ZEROS TO X.
+             SET NO-MATCH TO TRUE.
+             PERFORM VARYING X FROM PIC_POS BY 1
+                        UNTIL X = INP-LEN OR MATCH-FOUND
+                IF CPY-STRNG(X:1) = ')'
+                   SET MATCH-FOUND TO TRUE
+                   INITIALIZE WS-POS-CLO-BRKT
+                   MOVE X TO WS-POS-CLO-BRKT
+                END-IF
+             END-PERFORM.
+
+      *  DECIMAL SEARCH
+             MOVE ZEROS TO X.
+             SET NO-MATCH TO TRUE.
+             PERFORM VARYING X FROM PIC_POS BY 1
+                        UNTIL X = INP-LEN OR MATCH-FOUND
+                IF CPY-STRNG(X:1) = 'V'
+                   SET MATCH-FOUND TO TRUE
+                   MOVE X TO WS-POS-DEC-BRKT
+                END-IF
+             END-PERFORM.
+
+      *  VALUE CLAUSE SEARCH
+             MOVE ZEROS TO X.
+             SET NO-MATCH TO TRUE.
+             PERFORM VARYING X FROM PIC_POS BY 1
+                        UNTIL X = INP-LEN OR MATCH-FOUND
+                IF CPY-STRNG(X:5) = "VALUE"
+                   SET MATCH-FOUND TO TRUE
+                   MOVE X TO WS-POS-VAL-BRKT
+                END-IF
+             END-PERFORM.
+
+      *************************************************************
+       204-DETERMINE-CASE.
+      *ALI
+      *SIMPLE PIC CLAUSE WITHOUT VALUE CLAUSE
+             IF WS-CNT-OPN-BRKT = ZEROS AND
+                WS-CNT-CLO-BRKT = ZEROS AND
+                WS-CNT-DEC-BRKT = ZEROS AND
+                WS-CNT-VAL-BRKT = ZEROS
+                MOVE 'N' TO WS-DECIMAL(IND)
+                MOVE ZEROS TO WS-DECIMAL-POS(IND)
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                     VARYING SUB-1 FROM PIC_POS BY 1
+                               UNTIL SUB-1 > 72
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *SIMPLE PIC CLAUSE WITH VALUE CLAUSE WITHOUT DECIMAL
+             IF WS-CNT-OPN-BRKT = ZEROS AND
+                WS-CNT-CLO-BRKT = ZEROS AND
+                WS-CNT-VAL-BRKT > ZEROS AND
+                WS-CNT-DEC-B_VAL = ZEROS
+                MOVE 'N' TO WS-DECIMAL(IND)
+                MOVE ZEROS TO WS-DECIMAL-POS(IND)
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                     VARYING SUB-1 FROM PIC_POS BY 1
+                     UNTIL SUB-1 > WS-POS-VAL-BRKT
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *SIMPLE PIC CLAUSE WITHOUT DECIMAL BUT HAVING
+      *OPEN AND CLOSING BREAKT
+             IF WS-CNT-OPN-BRKT > ZEROS AND
+                WS-CNT-CLO-BRKT > ZEROS AND
+                WS-CNT-DEC-BRKT = ZEROS AND
+                WS-CNT-VAL-BRKT  = ZEROS AND
+                WS-CNT-DEC-B_VAL = ZEROS
+                MOVE 'N' TO WS-DECIMAL(IND)
+                MOVE ZEROS TO WS-DECIMAL-POS(IND)
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM PIC_POS BY 1
+                   UNTIL SUB-1 > WS-POS-OPN-BRKT
+                SUBTRACT WS-ONE FROM LEN-COUNT
+                MOVE ZEROS TO HOLD-COUNT
+                COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                                 HOLD-COUNT
+                COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *SIMPLE PIC CLAUSE WITHOUT DECIMAL BUT HAVING
+      *OPEN AND CLOSING BREAKT AND HAVING VALUE CLAUSE
+             IF WS-CNT-OPN-BRKT > ZEROS AND
+                WS-CNT-CLO-BRKT > ZEROS AND
+                WS-CNT-VAL-BRKT > ZEROS AND
+                WS-CNT-DEC-B_VAL = ZEROS
+                MOVE 'N' TO WS-DECIMAL(IND)
+                MOVE ZEROS TO WS-DECIMAL-POS(IND)
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM PIC_POS BY 1
+                   UNTIL SUB-1 > WS-POS-OPN-BRKT
+                SUBTRACT WS-ONE FROM LEN-COUNT
+                MOVE ZEROS TO HOLD-COUNT
+                COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                                 HOLD-COUNT
+                COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+
+      * TO HANDLE DECIMAL VALUE WHERE VALUE CLAUSE IS NOT
+      *AVAILABLE AND THERE IS NO OPENING AND CLOING BREAKET
+             IF WS-CNT-VAL-BRKT = ZEROS AND
+                WS-CNT-DEC-BRKT > ZEROS AND
+                WS-CNT-OPN-BRKT = ZEROS AND
+                WS-CNT-CLO-BRKT = ZEROS
+               PERFORM 205-GET-VAR-LEN
+                           THRU 205-EXIT
+                  VARYING SUB-1 FROM PIC_POS BY 1
+                  UNTIL SUB-1 > WS-POS-DEC-BRKT
+               PERFORM 205-GET-VAR-LEN
+                           THRU 205-EXIT
+                  VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                              UNTIL SUB-1 > 72
+               MOVE 'Y' TO WS-DECIMAL(IND)
+               COMPUTE WS-DECIMAL-POS(IND) =
+                                WS-POS-DEC-BRKT - START-POS
+               COMPUTE WS-DECIMAL-POS(IND) =
+                     LEN-COUNT - WS-DECIMAL-POS(IND)
+               PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *TO HANDLE DECIMAL VALUE WHERE VALUE CLAUSE IS
+      * AVAILABLE AND THERE IS NO OPENING AND CLOING BREAKET
+             IF WS-CNT-VAL-BRKT > ZEROS AND
+                WS-CNT-DEC-BRKT > ZEROS AND
+                WS-CNT-OPN-BRKT = ZEROS AND
+                WS-CNT-CLO-BRKT = ZEROS AND
+                WS-CNT-DEC-B_VAL > ZEROS
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM PIC_POS BY 1
+                     UNTIL SUB-1 > WS-POS-DEC-BRKT
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                   UNTIL SUB-1 > WS-POS-VAL-BRKT
+                MOVE 'Y' TO WS-DECIMAL(IND)
+                COMPUTE WS-DECIMAL-POS(IND) =
+                  WS-POS-DEC-BRKT - START-POS
+                COMPUTE WS-DECIMAL-POS(IND) =
+                  LEN-COUNT - WS-DECIMAL-POS(IND)
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *PIC CLAUSE WITH DECI BUT HAVING OPEN & CLOSING BRKT
+             IF WS-CNT-OPN-BRKT > ZEROS AND
+                WS-CNT-CLO-BRKT > ZEROS AND
+                WS-CNT-DEC-BRKT > ZEROS AND
+                WS-CNT-VAL-BRKT = ZEROS
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM PIC_POS BY 1
+                     UNTIL SUB-1 > WS-POS-OPN-BRKT
+                SUBTRACT WS-ONE FROM LEN-COUNT
+                MOVE ZEROS TO HOLD-COUNT
+                COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                     HOLD-COUNT
+                COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+
+                MOVE 'Y' TO WS-DECIMAL(IND)
+                MOVE LEN-COUNT TO WS-DECIMAL-POS(IND)
+
+                MOVE ZEROS TO WS-CNT-OPN-BRKT
+                INSPECT CPY-STRNG TALLYING WS-CNT-OPN-BRKT
+                   FOR ALL '(' AFTER INITIAL ')'
+
+                IF WS-CNT-OPN-BRKT > 0
+                  PERFORM 206-GET-SECOND-OPN-BRKT
+                  PERFORM 205-GET-VAR-LEN
+                                 THRU 205-EXIT
+                     VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                     UNTIL SUB-1 > WS-POS-OPN-BRKT
+                  SUBTRACT WS-ONE FROM LEN-COUNT
+                  COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                  MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                                   HOLD-COUNT
+                  COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+                ELSE
+                   PERFORM 205-GET-VAR-LEN
+                                  THRU 205-EXIT
+                      VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                        UNTIL SUB-1 > INP-LEN
+
+                END-IF
+
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF
+
+      *SIMPLE PIC CLAUSE WITH DECIMAL BUT HAVING OPEN AND CLOSING BREAKT WITH VALUE CLAUSE
+             IF WS-CNT-OPN-BRKT > ZEROS AND
+                WS-CNT-CLO-BRKT > ZEROS AND
+                WS-CNT-DEC-BRKT > ZEROS AND
+                WS-CNT-VAL-BRKT > ZEROS
+                PERFORM 205-GET-VAR-LEN
+                               THRU 205-EXIT
+                   VARYING SUB-1 FROM PIC_POS BY 1
+                      UNTIL SUB-1 > WS-POS-OPN-BRKT
+                SUBTRACT WS-ONE FROM LEN-COUNT
+                MOVE ZEROS TO HOLD-COUNT
+                COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                                 HOLD-COUNT
+                COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+                MOVE 'Y' TO WS-DECIMAL(IND)
+                MOVE LEN-COUNT TO WS-DECIMAL-POS(IND)
+
+                MOVE ZEROS TO WS-CNT-OPN-BRKT
+                INSPECT CPY-STRNG TALLYING WS-CNT-OPN-BRKT
+                  FOR ALL '(' AFTER INITIAL ')'
+
+                IF WS-CNT-OPN-BRKT > 0
+                   PERFORM 206-GET-SECOND-OPN-BRKT
+                   PERFORM 205-GET-VAR-LEN
+                                  THRU 205-EXIT
+                      VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                         UNTIL SUB-1 > WS-POS-OPN-BRKT
+                   SUBTRACT 1 FROM LEN-COUNT
+                   COMPUTE DIFF = WS-POS-CLO-BRKT - WS-POS-OPN-BRKT - 1
+                   MOVE CPY-STRNG(WS-POS-OPN-BRKT + 1 : DIFF) TO
+                                    HOLD-COUNT
+                   COMPUTE LEN-COUNT = LEN-COUNT + HOLD-COUNT
+                ELSE
+                   PERFORM 205-GET-VAR-LEN
+                                  THRU 205-EXIT
+                      VARYING SUB-1 FROM WS-POS-DEC-BRKT BY 1
+                        UNTIL SUB-1 > WS-POS-VAL-BRKT
+                END-IF
+
+                MOVE 'Y' TO WS-DECIMAL(IND)
+                MOVE WS-POS-DEC-BRKT TO WS-DECIMAL-POS(IND)
+                COMPUTE WS-DECIMAL-POS(IND) =
+                    LEN-COUNT - WS-DECIMAL-POS(IND)
+                PERFORM 900-CHECK-COMP-LENGTH
+             END-IF.
+
+      *************************************************************
+      *FOR SECOND OPENING BREAKET SREACHING
+       206-GET-SECOND-OPN-BRKT.
+             MOVE ZEROS TO X.
+             SET NO-MATCH TO TRUE.
+             PERFORM VARYING X FROM WS-POS-DEC-BRKT BY 1
+                        UNTIL X = WS-POS-VAL-BRKT OR
+                        MATCH-FOUND
+                IF CPY-STRNG(X:1) = '('
+                   SET MATCH-FOUND TO TRUE
+                   MOVE X TO WS-POS-OPN-BRKT
+                END-IF
+             END-PERFORM.
+
+             MOVE ZEROS TO X.
+             SET NO-MATCH TO TRUE.
+             PERFORM VARYING X FROM WS-POS-DEC-BRKT BY 1
+                        UNTIL X = WS-POS-VAL-BRKT OR
+                           MATCH-FOUND
+                IF CPY-STRNG(X:1) = ')'
+                   SET MATCH-FOUND TO TRUE
+                   MOVE X TO WS-POS-CLO-BRKT
+                END-IF
+             END-PERFORM.
+
+      *************************************************************
+       900-CHECK-COMP-LENGTH.
+             EVALUATE TRUE
+               WHEN WS-COMP > 0 AND
+                    LEN-COUNT >= '001' AND
+                    LEN-COUNT <= '004'
+                    MOVE 2 TO LEN-COUNT
+               WHEN WS-COMP > 0 AND
+                    LEN-COUNT >= '005' AND
+                    LEN-COUNT <= '009'
+                    MOVE 4 TO LEN-COUNT
+               WHEN WS-COMP > 0 AND
+                    LEN-COUNT >= '010' AND
+                    LEN-COUNT <= '018'
+                    MOVE 8 TO LEN-COUNT
+             END-EVALUATE.
+
+             IF WS-COMP-3 > 0
+                DIVIDE LEN-COUNT BY 2 GIVING WS-DIV REMAINDER WS-REM
+                IF WS-REM = ZEROS
+                   MOVE WS-DIV TO LEN-COUNT
+                ELSE
+                   ADD 1 TO WS-DIV
+                   MOVE WS-DIV     TO LEN-COUNT
+                END-IF
+             END-IF.
+      *************************************************************
